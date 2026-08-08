@@ -4,17 +4,24 @@
 alias ..="cd .."
 alias ...="cd ../.."
 
-# Commands
+# Dev utilities
 alias src="source $HOME/.bashrc"
 alias c="clear"
 alias ll="ls -la"
-
-# Dev utilities
 alias ports="ss -tulpn"
 alias reload="src"                   # if you prefer the name
 alias please="sudo !!"               # note: needs hist expansion; or use a function
 alias h="history"
 alias hg="history | grep"
+
+# Package managers
+alias aptu="sudo apt update && sudo apt upgrade -y"
+alias apti="sudo apt install"
+alias aptr="sudo apt remove"
+alias aptp="sudo apt purge"
+alias aptc="sudo apt clean"
+alias aptar="sudo apt autoremove"
+alias aptac="sudo apt autoclean"
 
 # Git
 alias g="git"
