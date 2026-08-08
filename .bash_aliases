@@ -79,7 +79,7 @@ mkcd() {
 	mkdir -p "$1" && cd "$1"
 }
 
-bkb() {
+bkp() {
 	local file="$1"
 
 	if [[ ! -e "$file" ]]; then
