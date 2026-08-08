@@ -13,4 +13,3 @@ fi
 ln -sf "$NEW_BASH_ALIASES" "$OLD_BASH_ALIASES"
 
 touch "$LOCKFILE"
-
