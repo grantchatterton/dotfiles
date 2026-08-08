@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OLD_BASH_ALIASES_FILE="$HOME/.bash_aliases"
-NEW_BASH_ALIASES_FILE="$HOME/dotfiles/.bash_aliases"
+SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+LOCKFILE="$SCRIPT_DIR/.dotfiles_installed"
+OLD_BASH_ALIASES="$HOME/.bash_aliases"
+NEW_BASH_ALIASES="$SCRIPT_DIR/.bash_aliases"
 
-if [[ -f "$OLD_BASH_ALIASES_FILE" ]]; then
-  rm -f "$OLD_BASH_ALIASES_FILE"
+if [[ -f "$LOCKFILE" ]]; then
+  exit 0
 fi
 
-ln -s "$NEW_BASH_ALIASES_FILE" "$OLD_BASH_ALIASES_FILE"
+ln -sf "$NEW_BASH_ALIASES" "$OLD_BASH_ALIASES"
+
