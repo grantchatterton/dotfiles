@@ -78,3 +78,29 @@ alias grss="git restore --staged"
 mkcd() {
 	mkdir -p "$1" && cd "$1"
 }
+
+bkb() {
+	local file="$1"
+
+	if [[ ! -e "$file" ]]; then
+		echo "ERROR: File not found" >&2
+		return 1
+	fi
+
+	local file_path="$(readlink -f "$file")"
+	local file_name="$(basename "$file_path")"
+	local file_dir="$(dirname "$file_path")"
+
+	local backup_base="${file_dir}/${file_name}.backup_$(date +%m%d%Y)"
+	local backup_num=1
+	local backup_file="${backup_base}_${backup_num}"
+
+	while [[ -e "$backup_file" ]]; do
+		((backup_num++))
+		backup_file="${backup_base}_${backup_num}"
+	done
+
+	cp -r "$file" "$backup_file"
+
+	echo "Backup created: $backup_file"
+}
