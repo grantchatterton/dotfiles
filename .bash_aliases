@@ -100,7 +100,7 @@ bkp() {
 		backup_file="${backup_base}_${backup_num}"
 	done
 
-	cp -r "$file" "$backup_file"
+	cp -r "$file_path" "$backup_file"
 
 	echo "Backup created: $backup_file"
 }
