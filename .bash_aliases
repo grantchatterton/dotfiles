@@ -1,9 +1,22 @@
 #!/usr/bin/env bash
+
+# Navigation
+alias ..="cd .."
+alias ...="cd ../.."
+
+# Commands
 alias src="source $HOME/.bashrc"
 alias c="clear"
 alias ll="ls -la"
 
-# git
+# Dev utilities
+alias ports="ss -tulpn"
+alias reload="src"                   # if you prefer the name
+alias please="sudo !!"               # note: needs hist expansion; or use a function
+alias h="history"
+alias hg="history | grep"
+
+# Git
 alias g="git"
 alias gs="git status"
 alias gss="git status -s"
@@ -18,10 +31,12 @@ alias gp="git push"
 alias gpf="git push --force-with-lease"
 alias gpu="git push -u origin HEAD"
 alias gl="git pull"
+alias gpr="git pull --rebase"
 alias gf="git fetch"
 alias gfa="git fetch --all --prune"
 alias gd="git diff"
 alias gds="git diff --staged"
+alias gdst="git diff --stat"
 alias gco="git checkout"
 alias gcb="git checkout -b"
 alias gb="git branch"
@@ -33,19 +48,26 @@ alias gr="git rebase"
 alias gri="git rebase -i"
 alias grc="git rebase --continue"
 alias gra="git rebase --abort"
+alias grm="git rebase origin/main"
 alias gst="git stash"
 alias gstp="git stash pop"
 alias gstl="git stash list"
 alias glog="git log --oneline --graph --decorate"
 alias gloga="git log --oneline --graph --decorate --all"
+alias glast="git log -1 --stat"
+alias gwho="git shortlog -sn"
 alias gundo="git reset --soft HEAD~1"
+alias gwip='git add -A && git commit -m "wip"'
+alias gunwip="git reset HEAD~1"
 alias gclean="git clean -fd"
 alias gsw="git switch"
 alias gswc="git switch -c"
+alias gswm="git switch main"
 alias gcp="git cherry-pick"
 alias grs="git restore"
 alias grss="git restore --staged"
 
+# Utility
 mkcd() {
 	mkdir -p "$1" && cd "$1"
 }
