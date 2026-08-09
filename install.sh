@@ -6,7 +6,7 @@ LOCKFILE="$SCRIPT_DIR/.dotfiles_installed"
 OLD_BASH_ALIASES="$HOME/.bash_aliases"
 NEW_BASH_ALIASES="$SCRIPT_DIR/.bash_aliases"
 
-if [[ -f "$LOCKFILE" ]]; then
+if [[ -e "$LOCKFILE" ]]; then
   exit 0
 fi
 
