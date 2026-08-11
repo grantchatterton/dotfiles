@@ -25,8 +25,3 @@ alias diff="diff --color=auto"
 alias cls="clear"
 alias ..l="cd .. && ll"
 alias mkdirp="mkdir -p"
-
-alias serve="python3 -m http.server"
-alias json="python3 -m json.tool"
-alias urlencode='python3 -c "import sys,urllib.parse; print(urllib.parse.quote(sys.argv[1]))"'
-alias urldecode='python3 -c "import sys,urllib.parse; print(urllib.parse.unquote(sys.argv[1]))"'
