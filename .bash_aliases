@@ -75,6 +75,23 @@ alias grs="git restore"
 alias grss="git restore --staged"
 
 # Utility
+# Usage: cg PATTERN [FILE...]  (or: cat FILE | cg PATTERN)
+cg() {
+	if [[ $# -lt 1 ]]; then
+		echo "Usage: cg PATTERN [FILE...]" >&2
+		return 1
+	fi
+
+	local pattern="$1"
+	shift
+
+	if [[ $# -eq 0 ]]; then
+		grep -i --color=auto -- "$pattern"
+	else
+		cat -- "$@" | grep -i --color=auto -- "$pattern"
+	fi
+}
+
 mkcd() {
 	mkdir -p "$1" && cd "$1"
 }
