@@ -2,17 +2,17 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-TARGET_ALIASES="${HOME}/.bash_aliases"
-SOURCE_ALIASES="${SCRIPT_DIR}/.bash_aliases"
 FORCE=0
 
 usage() {
 	cat <<'EOF'
 Usage: ./install.sh [--force]
 
-Symlink this repo's .bash_aliases into ~/.bash_aliases so shell/*.sh is loaded.
+Symlink this repo's .bash_aliases and .gitconfig into $HOME.
 Re-running is safe. An existing symlink into this repo is left alone (or
-refreshed with --force). A regular ~/.bash_aliases file is backed up first.
+refreshed with --force). A regular file is backed up first.
+
+On Cursor Cloud Agents, .gitconfig is skipped so managed GitHub auth is kept.
 EOF
 }
 
@@ -33,8 +33,8 @@ for arg in "$@"; do
 	esac
 done
 
-if [[ ! -f "$SOURCE_ALIASES" ]]; then
-	echo "ERROR: missing ${SOURCE_ALIASES}" >&2
+if [[ ! -f "${SCRIPT_DIR}/.bash_aliases" ]]; then
+	echo "ERROR: missing ${SCRIPT_DIR}/.bash_aliases" >&2
 	exit 1
 fi
 
@@ -43,28 +43,58 @@ if [[ ! -d "${SCRIPT_DIR}/shell" ]]; then
 	exit 1
 fi
 
-link_aliases() {
-	ln -sfn "$SOURCE_ALIASES" "$TARGET_ALIASES"
-	echo "Linked ${TARGET_ALIASES} -> ${SOURCE_ALIASES}"
+if [[ ! -f "${SCRIPT_DIR}/.gitconfig" ]]; then
+	echo "ERROR: missing ${SCRIPT_DIR}/.gitconfig" >&2
+	exit 1
+fi
+
+# Cursor Cloud injects HTTPS token rewrites into ~/.gitconfig; do not replace it.
+is_cursor_cloud() {
+	[[ -n "${CURSOR_AGENT:-}" ]] ||
+		[[ -x "${HOME}/.cursor/bin/cursor-git-ssh-keygen" ]] ||
+		[[ "$(git config --global --get cursor.managedghconfig 2>/dev/null || true)" == "true" ]]
 }
 
-if [[ -L "$TARGET_ALIASES" ]]; then
-	# readlink -f fails when the symlink target is missing (moved/deleted
-	# checkout). Treat failed canonicalization as stale and refresh the link.
-	desired="$(readlink -f "$SOURCE_ALIASES")"
-	if current="$(readlink -f "$TARGET_ALIASES" 2>/dev/null)" &&
-		[[ "$current" == "$desired" && "$FORCE" -eq 0 ]]; then
-		echo "Already installed: ${TARGET_ALIASES}"
-		exit 0
+# Link $1 (repo-relative name under SCRIPT_DIR) to $HOME/$1
+ensure_link() {
+	local name="$1"
+	local source="${SCRIPT_DIR}/${name}"
+	local target="${HOME}/${name}"
+
+	if [[ ! -f "$source" ]]; then
+		echo "ERROR: missing ${source}" >&2
+		return 1
 	fi
-	link_aliases
-	exit 0
-fi
 
-if [[ -e "$TARGET_ALIASES" ]]; then
-	backup="${TARGET_ALIASES}.bak.$(date +%Y%m%d%H%M%S)"
-	mv "$TARGET_ALIASES" "$backup"
-	echo "Backed up existing file to ${backup}"
-fi
+	if [[ -L "$target" ]]; then
+		# readlink -f fails when the symlink target is missing (moved/deleted
+		# checkout). Treat failed canonicalization as stale and refresh the link.
+		local desired current
+		desired="$(readlink -f "$source")"
+		if current="$(readlink -f "$target" 2>/dev/null)" &&
+			[[ "$current" == "$desired" && "$FORCE" -eq 0 ]]; then
+			echo "Already installed: ${target}"
+			return 0
+		fi
+		ln -sfn "$source" "$target"
+		echo "Linked ${target} -> ${source}"
+		return 0
+	fi
 
-link_aliases
+	if [[ -e "$target" ]]; then
+		local backup="${target}.bak.$(date +%Y%m%d%H%M%S)"
+		mv "$target" "$backup"
+		echo "Backed up existing file to ${backup}"
+	fi
+
+	ln -sfn "$source" "$target"
+	echo "Linked ${target} -> ${source}"
+}
+
+ensure_link ".bash_aliases"
+
+if is_cursor_cloud; then
+	echo "Skipping .gitconfig on Cursor Cloud (managed auth)"
+else
+	ensure_link ".gitconfig"
+fi

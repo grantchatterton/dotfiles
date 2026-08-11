@@ -7,6 +7,7 @@ Personal bash aliases and helper functions, structured for local shells and Curs
 ```text
 .
 ├── .bash_aliases          # loader: sources shell/*.sh
+├── .gitconfig             # identity, pull.rebase, GitHub via SSH
 ├── install.sh             # symlink installer
 ├── shell/
 │   ├── nav.sh             # directory navigation
@@ -27,14 +28,14 @@ Personal bash aliases and helper functions, structured for local shells and Curs
 source ~/.bashrc   # or open a new shell
 ```
 
-Re-run anytime to refresh the symlink. If `~/.bash_aliases` is a regular file, it is moved aside as a timestamped `.bak.*` before linking.
+Re-run anytime to refresh symlinks. Regular `~/.bash_aliases` / `~/.gitconfig` files are moved aside as timestamped `.bak.*` before linking.
 
 ```bash
 ./install.sh --force   # always re-link
 ./install.sh --help
 ```
 
-Cursor Cloud uses the same installer via `.cursor/environment.json`.
+Cursor Cloud uses the same installer via `.cursor/environment.json`. On Cloud Agents, `.gitconfig` is skipped so Cursor’s managed GitHub auth is left alone.
 
 ## Highlights
 

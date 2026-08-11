@@ -1,0 +1,13 @@
+[user]
+	name = Grant Chatterton
+	email = grantchatterton@proton.me
+
+[init]
+	defaultBranch = main
+
+[pull]
+	rebase = true
+
+# Prefer SSH for GitHub (uses your local SSH key / agent)
+[url "git@github.com:"]
+	insteadOf = https://github.com/
