@@ -1,1 +1,3 @@
 .dotfiles_installed
+*.bak.*
+.DS_Store

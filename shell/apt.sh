@@ -1,0 +1,10 @@
+# apt (Debian/Ubuntu)
+alias aptu="sudo apt update && sudo apt upgrade -y"
+alias apti="sudo apt install"
+alias aptr="sudo apt remove"
+alias aptp="sudo apt purge"
+alias aptc="sudo apt clean"
+alias aptar="sudo apt autoremove"
+alias aptac="sudo apt autoclean"
+alias apts="apt search"
+alias aptsh="apt show"
