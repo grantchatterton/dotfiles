@@ -6,16 +6,7 @@ _DOTFILES_ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")" && pw
 _DOTFILES_SHELL="${_DOTFILES_ROOT}/shell"
 
 if [[ -d "$_DOTFILES_SHELL" ]]; then
-	for _dotfiles_file in \
-		"$_DOTFILES_SHELL"/nav.sh \
-		"$_DOTFILES_SHELL"/general.sh \
-		"$_DOTFILES_SHELL"/apt.sh \
-		"$_DOTFILES_SHELL"/git.sh \
-		"$_DOTFILES_SHELL"/podman.sh \
-		"$_DOTFILES_SHELL"/node.sh \
-		"$_DOTFILES_SHELL"/bun.sh \
-		"$_DOTFILES_SHELL"/functions.sh
-	do
+	for _dotfiles_file in "$_DOTFILES_SHELL"/*.sh; do
 		# shellcheck source=/dev/null
 		[[ -r "$_dotfiles_file" ]] && source "$_dotfiles_file"
 	done
