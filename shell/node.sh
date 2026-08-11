@@ -1,4 +1,4 @@
-# Node / npm / bun
+# Node / npm
 alias ni="npm install"
 alias nid="npm install --save-dev"
 alias nig="npm install -g"
@@ -14,18 +14,6 @@ alias nout="npm outdated"
 alias nup="npm update"
 alias nls="npm ls --depth=0"
 alias nxl="npx --yes"
-
-alias b="bun"
-alias bi="bun install"
-alias ba="bun add"
-alias bad="bun add -d"
-alias br="bun run"
-alias brd="bun run dev"
-alias brb="bun run build"
-alias brt="bun test"
-alias bx="bunx"
-alias bu="bun update"
-alias brm="bun remove"
 
 # Prefer package-manager scripts when present
 pj() {

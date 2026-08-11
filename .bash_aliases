@@ -13,6 +13,7 @@ if [[ -d "$_DOTFILES_SHELL" ]]; then
 		"$_DOTFILES_SHELL"/git.sh \
 		"$_DOTFILES_SHELL"/podman.sh \
 		"$_DOTFILES_SHELL"/node.sh \
+		"$_DOTFILES_SHELL"/bun.sh \
 		"$_DOTFILES_SHELL"/functions.sh
 	do
 		# shellcheck source=/dev/null
