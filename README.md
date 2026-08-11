@@ -42,7 +42,7 @@ Cursor Cloud uses the same installer via `.cursor/environment.json`.
 | Git | `gs`, `gcm`, `gpsu`, `glog`, `gsta` / `gstap` |
 | Podman | `pps`, `pex`, `prun`, `pcpu` / `pcpd` |
 | Node / Bun | `ni`, `nrd`, `bi`, `brd`, `pj` / `pjrd` (picks bun/pnpm/yarn/npm from lockfile) |
-| General | `ll`, `ports`, `please`, `serve`, `extract`, `ff`, `fgr`, `killport`, `bkp`, `mkcd` |
+| General | `ll`, `ports`, `please` (sudo prev cmd, keeps quoting), `serve`, `extract`, `ff`, `fgr`, `killport`, `bkp`, `mkcd` |
 
 ## Reload after edits
 

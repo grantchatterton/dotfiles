@@ -25,7 +25,6 @@ alias diff="diff --color=auto"
 alias cls="clear"
 alias ..l="cd .. && ll"
 alias mkdirp="mkdir -p"
-alias please='sudo $(fc -ln -1)'
 
 alias serve="python3 -m http.server"
 alias json="python3 -m json.tool"

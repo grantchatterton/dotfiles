@@ -1,5 +1,30 @@
 # Utility functions
 
+# Re-run the previous command with sudo, preserving shell quoting/operators.
+please() {
+	local cmd
+	# fc -ln FIRST LAST: omit LAST and it lists through the current command.
+	cmd="$(HISTTIMEFORMAT= fc -ln -1 -1 2>/dev/null)" || {
+		echo "please: no previous command" >&2
+		return 1
+	}
+	# fc prefixes lines with whitespace
+	cmd="${cmd#"${cmd%%[![:space:]]*}"}"
+	# If history already recorded this invocation (e.g. via alias), step back.
+	if [[ "$cmd" == please || "$cmd" == please[[:space:]]* ]]; then
+		cmd="$(HISTTIMEFORMAT= fc -ln -2 -2 2>/dev/null)" || {
+			echo "please: no previous command" >&2
+			return 1
+		}
+		cmd="${cmd#"${cmd%%[![:space:]]*}"}"
+	fi
+	if [[ -z "$cmd" ]]; then
+		echo "please: no previous command" >&2
+		return 1
+	fi
+	eval "sudo ${cmd}"
+}
+
 mkcd() {
 	mkdir -p "$1" && cd "$1" || return 1
 }

@@ -49,9 +49,11 @@ link_aliases() {
 }
 
 if [[ -L "$TARGET_ALIASES" ]]; then
-	current="$(readlink -f "$TARGET_ALIASES")"
+	# readlink -f fails when the symlink target is missing (moved/deleted
+	# checkout). Treat failed canonicalization as stale and refresh the link.
 	desired="$(readlink -f "$SOURCE_ALIASES")"
-	if [[ "$current" == "$desired" && "$FORCE" -eq 0 ]]; then
+	if current="$(readlink -f "$TARGET_ALIASES" 2>/dev/null)" &&
+		[[ "$current" == "$desired" && "$FORCE" -eq 0 ]]; then
 		echo "Already installed: ${TARGET_ALIASES}"
 		exit 0
 	fi
