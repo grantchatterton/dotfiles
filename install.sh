@@ -170,7 +170,7 @@ ensure_link ".bash_aliases"
 ensure_link ".zsh_aliases"
 ensure_zshrc_hook
 
-if is_cursor_cloud(); then
+if is_cursor_cloud; then
 	echo "Skipping .gitconfig on Cursor Cloud (managed auth)"
 else
 	ensure_link ".gitconfig"
