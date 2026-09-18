@@ -7,17 +7,14 @@ Personal bash aliases and helper functions, structured for local shells and Curs
 ```text
 .
 ├── .bash_aliases          # loader: sources shell/*.sh
-├── .gitconfig             # identity, pull.rebase, GitHub via SSH
+├── .gitconfig             # identity, defaultBranch, GitHub via SSH
 ├── install.sh             # symlink installer
 ├── shell/
 │   ├── nav.sh             # directory navigation
 │   ├── general.sh         # everyday QOL aliases
 │   ├── apt.sh             # apt shortcuts
 │   ├── git.sh             # git shortcuts
-│   ├── podman.sh          # podman / compose
-│   ├── node.sh            # npm / lockfile-aware pj
-│   ├── bun.sh             # bun shortcuts
-│   └── functions.sh       # mkcd, bkp, extract, ff, …
+│   └── functions.sh       # mkcd
 └── .cursor/environment.json
 ```
 
@@ -42,10 +39,10 @@ Cursor Cloud uses the same installer via `.cursor/environment.json`. On Cloud Ag
 | Area | Examples |
 |------|----------|
 | Git | `gs`, `gcm`, `gpsu`, `glog`, `gsta` / `gstap` |
-| Podman | `pps`, `pex`, `prun`, `pcpu` / `pcpd` |
-| Node | `ni`, `nrd`, `pj` / `pjrd` (picks bun/pnpm/yarn/npm from lockfile) |
-| Bun | `bi`, `ba`, `brd`, `brt`, `bx` |
-| General | `ll`, `ports`, `please` (sudo prev cmd, keeps quoting), `serve`, `extract`, `ff`, `fgr`, `killport`, `bkp`, `mkcd` |
+| Apt | `aptu`, `apti`, `apts`, `aptar` |
+| Nav | `..`, `...`, `....`, `-` |
+| General | `ll`, `ports`, `path`, `myip`, `src` / `reload` |
+| Functions | `mkcd` |
 
 ## Reload after edits
 
