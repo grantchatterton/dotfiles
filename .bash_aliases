@@ -1,25 +1,16 @@
+#!/usr/bin/env bash
 # Entry point sourced by interactive bash (~/.bash_aliases).
-# Shared definitions live in shell/*.sh (loaded via shell/load.sh).
+# Modular definitions live in shell/*.sh next to this file (or via symlink).
 
-_dotfiles_bootstrap() {
-	local self root link
-	if [[ -n "${BASH_VERSION:-}" ]]; then
-		self="${BASH_SOURCE[0]}"
-	else
-		self="$0"
-	fi
-	# Resolve symlink target directory without GNU readlink -f.
-	if [[ -L "$self" ]]; then
-		link="$(readlink "$self")"
-		case "$link" in
-		/*) self="$link" ;;
-		*) self="$(dirname "$self")/${link}" ;;
-		esac
-	fi
-	root="$(cd "$(dirname "$self")" && pwd -P)"
-	# shellcheck source=/dev/null
-	source "${root}/shell/load.sh"
-}
+_DOTFILES_ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]:-$0}")")" && pwd)"
+_DOTFILES_SHELL="${_DOTFILES_ROOT}/shell"
 
-_dotfiles_bootstrap
-unset -f _dotfiles_bootstrap
+if [[ -d "$_DOTFILES_SHELL" ]]; then
+	for _dotfiles_file in "$_DOTFILES_SHELL"/*.sh; do
+		# shellcheck source=/dev/null
+		[[ -r "$_dotfiles_file" ]] && source "$_dotfiles_file"
+	done
+	unset _dotfiles_file
+fi
+
+unset _DOTFILES_ROOT _DOTFILES_SHELL
