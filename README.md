@@ -9,13 +9,12 @@ Personal bash aliases and helper functions, structured for local shells and Curs
 ├── .bash_aliases          # loader: sources shell/*.sh
 ├── .gitconfig             # identity, defaultBranch, GitHub via SSH
 ├── install.sh             # symlink installer
-├── shell/
-│   ├── nav.sh             # directory navigation
-│   ├── general.sh         # everyday QOL aliases
-│   ├── apt.sh             # apt shortcuts
-│   ├── git.sh             # git shortcuts
-│   └── functions.sh       # mkcd
-└── .cursor/environment.json
+└── shell/
+    ├── nav.sh             # directory navigation
+    ├── general.sh         # everyday QOL aliases
+    ├── apt.sh             # apt shortcuts
+    ├── git.sh             # git shortcuts
+    └── functions.sh       # mkcd
 ```
 
 ## Install
@@ -31,8 +30,6 @@ Re-run anytime to refresh symlinks. Regular `~/.bash_aliases` / `~/.gitconfig` f
 ./install.sh --force   # always re-link
 ./install.sh --help
 ```
-
-Cursor Cloud uses the same installer via `.cursor/environment.json`. On Cloud Agents, `.gitconfig` is skipped so Cursor’s managed GitHub auth is left alone.
 
 ## Highlights
 
