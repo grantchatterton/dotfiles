@@ -9,6 +9,7 @@ usage() {
 Usage: ./install.sh [--force]
 
 Symlink this repo's .bash_aliases and .gitconfig into $HOME.
+Ensure repo bin/ is on PATH via ~/.bashrc when missing.
 Re-running is safe. An existing symlink into this repo is left alone (or
 refreshed with --force). A regular file is backed up first.
 
@@ -45,6 +46,11 @@ fi
 
 if [[ ! -f "${SCRIPT_DIR}/.gitconfig" ]]; then
 	echo "ERROR: missing ${SCRIPT_DIR}/.gitconfig" >&2
+	exit 1
+fi
+
+if [[ ! -d "${SCRIPT_DIR}/bin" ]]; then
+	echo "ERROR: missing ${SCRIPT_DIR}/bin" >&2
 	exit 1
 fi
 
@@ -91,6 +97,29 @@ ensure_link() {
 	echo "Linked ${target} -> ${source}"
 }
 
+# Ensure ${SCRIPT_DIR}/bin is on PATH; append export to ~/.bashrc if missing.
+ensure_bin_on_path() {
+	local bin_dir="${SCRIPT_DIR}/bin"
+	local bashrc="${HOME}/.bashrc"
+	local export_line="export PATH=\"${bin_dir}:\$PATH\""
+
+	case ":${PATH}:" in
+		*":${bin_dir}:"*)
+			echo "Already on PATH: ${bin_dir}"
+			return 0
+			;;
+	esac
+
+	if [[ -f "$bashrc" ]] && grep -Fqx "$export_line" "$bashrc"; then
+		echo "PATH export already in ${bashrc} (source to apply)"
+		return 0
+	fi
+
+	touch "$bashrc"
+	printf '\n# dotfiles bin\n%s\n' "$export_line" >>"$bashrc"
+	echo "Added ${bin_dir} to PATH in ${bashrc}"
+}
+
 ensure_link ".bash_aliases"
 
 if is_cursor_cloud; then
@@ -98,3 +127,5 @@ if is_cursor_cloud; then
 else
 	ensure_link ".gitconfig"
 fi
+
+ensure_bin_on_path
