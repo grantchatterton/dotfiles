@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # apt (Debian/Ubuntu)
 alias aptu="sudo apt update && sudo apt upgrade -y"
 alias apti="sudo apt install"

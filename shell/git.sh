@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Git
 # Mnemonics: gps/gpl = puSh/pulL; gsta* = STAsh (gs/gss = Status);
 #            gr* = Rebase; grest* = RESTore (avoids colliding with rebase).

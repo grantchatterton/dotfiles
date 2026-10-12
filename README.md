@@ -1,6 +1,6 @@
 # dotfiles
 
-Personal bash aliases and helper functions, structured for local shells and Cursor Cloud Agents.
+Personal bash aliases and helper functions, plus git config.
 
 ## Layout
 
@@ -8,7 +8,8 @@ Personal bash aliases and helper functions, structured for local shells and Curs
 .
 ├── .bash_aliases          # loader: sources shell/*.sh
 ├── .gitconfig             # identity, defaultBranch, GitHub via SSH
-├── install.sh             # symlink installer
+├── install.sh             # symlink installer + bin/ PATH setup
+├── bin/                   # personal scripts (added to PATH)
 └── shell/
     ├── nav.sh             # directory navigation
     ├── general.sh         # everyday QOL aliases
@@ -24,7 +25,7 @@ Personal bash aliases and helper functions, structured for local shells and Curs
 source ~/.bashrc   # or open a new shell
 ```
 
-Re-run anytime to refresh symlinks. Regular `~/.bash_aliases` / `~/.gitconfig` files are moved aside as timestamped `.bak.*` before linking.
+Re-run anytime to refresh symlinks. Regular `~/.bash_aliases` / `~/.gitconfig` files are moved aside as timestamped `.bak.*` before linking. `bin/` is added to `PATH` via `~/.bashrc` if missing.
 
 ```bash
 ./install.sh --force   # always re-link

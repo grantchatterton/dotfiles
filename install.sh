@@ -8,12 +8,11 @@ usage() {
 	cat <<'EOF'
 Usage: ./install.sh [--force]
 
-Symlink this repo's .bash_aliases and .gitconfig into $HOME.
-Ensure repo bin/ is on PATH via ~/.bashrc when missing.
+Symlink this repo's .bash_aliases and .gitconfig into $HOME, and ensure the
+repo's bin/ is on PATH via ~/.bashrc.
+
 Re-running is safe. An existing symlink into this repo is left alone (or
 refreshed with --force). A regular file is backed up first.
-
-On Cursor Cloud Agents, .gitconfig is skipped so managed GitHub auth is kept.
 EOF
 }
 
@@ -34,32 +33,10 @@ for arg in "$@"; do
 	esac
 done
 
-if [[ ! -f "${SCRIPT_DIR}/.bash_aliases" ]]; then
-	echo "ERROR: missing ${SCRIPT_DIR}/.bash_aliases" >&2
-	exit 1
-fi
-
 if [[ ! -d "${SCRIPT_DIR}/shell" ]]; then
 	echo "ERROR: missing ${SCRIPT_DIR}/shell" >&2
 	exit 1
 fi
-
-if [[ ! -f "${SCRIPT_DIR}/.gitconfig" ]]; then
-	echo "ERROR: missing ${SCRIPT_DIR}/.gitconfig" >&2
-	exit 1
-fi
-
-if [[ ! -d "${SCRIPT_DIR}/bin" ]]; then
-	echo "ERROR: missing ${SCRIPT_DIR}/bin" >&2
-	exit 1
-fi
-
-# Cursor Cloud injects HTTPS token rewrites into ~/.gitconfig; do not replace it.
-is_cursor_cloud() {
-	[[ -n "${CURSOR_AGENT:-}" ]] ||
-		[[ -x "${HOME}/.cursor/bin/cursor-git-ssh-keygen" ]] ||
-		[[ "$(git config --global --get cursor.managedghconfig 2>/dev/null || true)" == "true" ]]
-}
 
 # Link $1 (repo-relative name under SCRIPT_DIR) to $HOME/$1
 ensure_link() {
@@ -82,13 +59,9 @@ ensure_link() {
 			echo "Already installed: ${target}"
 			return 0
 		fi
-		ln -sfn "$source" "$target"
-		echo "Linked ${target} -> ${source}"
-		return 0
-	fi
-
-	if [[ -e "$target" ]]; then
-		local backup="${target}.bak.$(date +%Y%m%d%H%M%S)"
+	elif [[ -e "$target" ]]; then
+		local backup
+		backup="${target}.bak.$(date +%Y%m%d%H%M%S)"
 		mv "$target" "$backup"
 		echo "Backed up existing file to ${backup}"
 	fi
@@ -103,6 +76,8 @@ ensure_bin_on_path() {
 	local bashrc="${HOME}/.bashrc"
 	local export_line="export PATH=\"${bin_dir}:\$PATH\""
 
+	mkdir -p "$bin_dir"
+
 	case ":${PATH}:" in
 		*":${bin_dir}:"*)
 			echo "Already on PATH: ${bin_dir}"
@@ -115,17 +90,10 @@ ensure_bin_on_path() {
 		return 0
 	fi
 
-	touch "$bashrc"
 	printf '\n# dotfiles bin\n%s\n' "$export_line" >>"$bashrc"
 	echo "Added ${bin_dir} to PATH in ${bashrc}"
 }
 
 ensure_link ".bash_aliases"
-
-if is_cursor_cloud; then
-	echo "Skipping .gitconfig on Cursor Cloud (managed auth)"
-else
-	ensure_link ".gitconfig"
-fi
-
+ensure_link ".gitconfig"
 ensure_bin_on_path
