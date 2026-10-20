@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "options": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "trailingComma": "all",
+    "singleQuote": true,
+    "semi": true,
+    "arrowParens": "always",
+    "bracketSpacing": true,
+    "bracketSameLine": false
+  }
+}
