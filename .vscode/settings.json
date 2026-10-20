@@ -1,0 +1,54 @@
+{
+  // TypeScript 7 (native tsgo)
+  "js/ts.experimental.useTsgo": true,
+  "js/ts.tsdk.path": "./node_modules/typescript/bin",
+  "js/ts.tsdk.additionalLocations": ["./node_modules/typescript/bin"],
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  // Formatting + linting: oxfmt/oxlint via the Oxc extension
+  "oxc.enable": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "explicit"
+  },
+  // Explicit per-language overrides so other extensions can't take over
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  // Disable conflicting tools
+  "prettier.enable": false,
+  "eslint.enable": false,
+  // Whitespace
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
+  // Editor
+  "editor.rulers": [100],
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.tabSize": 2,
+  // Search and file watching
+  "search.exclude": {
+    "**/node_modules": true,
+    "bun.lock": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true
+  },
+  "files.exclude": {
+    "**/node_modules": true,
+    "bun.lock": true
+  }
+}

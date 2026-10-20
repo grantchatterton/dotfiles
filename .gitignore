@@ -17,7 +17,6 @@ coverage/
 npm-debug.log*
 bun-debug.log*
 
-.vscode/
 .idea/
 *.swp
 *.swo
