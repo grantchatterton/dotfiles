@@ -1,6 +1,7 @@
 {
   "name": "dotfiles",
   "private": true,
+  "bin": {},
   "type": "module",
   "module": "src/index.ts",
   "scripts": {
