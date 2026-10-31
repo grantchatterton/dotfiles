@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if ! command -v podman >/dev/null 2>&1; then
+  echo "Error: podman is not installed. Please install podman to use this script." >&2
+  exit 1
+fi
+
 BUN_VERSION="$(bun --version 2>/dev/null || true)"
-BUN_VERSION="${BUN_VERSION:-1}"
-BUN_DOCKER_IMAGE="docker.io/oven/bun:${BUN_VERSION}-slim"
+BUN_DOCKER_IMAGE="docker.io/oven/bun:${BUN_VERSION:-1}-slim"
 
 NUM_CPUS=4
 MEMORY_MB=8192
@@ -18,16 +22,22 @@ podman_run_args=(
   --memory "${MEMORY_MB}m"
   --read-only
   --tmpfs "/tmp:rw,nosuid,nodev,mode=1777"
-  --volume "${PWD}:/workspace"
-  --workdir /workspace
-  --userns "keep-id:uid=$(id -u),gid=$(id -g)"
+  --volume "${PWD}:${PWD}"
+  --workdir "${PWD}"
+  --userns keep-id
 )
+
+if [[ -f "${HOME}/.bunfig.toml" ]]; then
+  podman_run_args+=(
+    --volume "${HOME}/.bunfig.toml:/home/bun/.bunfig.toml:ro"
+  )
+fi
 
 if command -v krun >/dev/null 2>&1; then
   podman_run_args+=(
     --runtime krun
-    --annotation krun.cpus="${NUM_CPUS}"
-    --annotation krun.ram_mib="${MEMORY_MB}"
+    --annotation "krun.cpus=${NUM_CPUS}"
+    --annotation "krun.ram_mib=${MEMORY_MB}"
   )
 fi
 
