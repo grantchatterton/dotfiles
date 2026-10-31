@@ -116,6 +116,12 @@ fi
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
+# load bash functions if available
+if [ -f ~/.bash_functions ]; then
+  # shellcheck disable=SC1090
+  . ~/.bash_functions
+fi
+
 # display fancy distro logo if fastfetch available
 if command -v fastfetch >/dev/null 2>&1; then
   fastfetch
