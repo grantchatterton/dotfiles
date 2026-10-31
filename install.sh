@@ -26,7 +26,7 @@ for config in "${configs_dir}"/*; do
     config_basename="$(basename -- "${config}")"
     config_home_path="${HOME}/${config_basename}"
 
-    if [[ -f "${config_home_path}" ]]; then
+    if [[ -f "${config_home_path}" ]] && ! cmp --silent "${config}" "${config_home_path}"; then
       echo "Backing up ${config_home_path}"
       backup "${config_home_path}"
     fi
@@ -36,4 +36,3 @@ for config in "${configs_dir}"/*; do
 done
 
 shopt -u dotglob
-
