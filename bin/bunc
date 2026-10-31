@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BUN_VERSION="$(bun --version 2>/dev/null || true)"
+BUN_VERSION="${BUN_VERSION:-latest}"
+BUN_DOCKER_IMAGE="docker.io/oven/bun:${BUN_VERSION}-slim"
+
+NUM_CPUS=4
+MEMORY_MB=8192
+
+podman_run_args=(
+  --rm
+  -it
+  --cap-drop ALL
+  --security-opt no-new-privileges
+  --pids-limit 512
+  --cpus "${NUM_CPUS}"
+  --memory "${MEMORY_MB}m"
+  --read-only
+  --tmpfs "/tmp:rw,nosuid,nodev,mode=1777"
+  --volume "${PWD}:/workspace"
+  --workdir /workspace
+  --userns "keep-id:uid=$(id -u),gid=$(id -g)"
+)
+
+if command -v krun >/dev/null 2>&1; then
+  podman_run_args+=(
+    --runtime krun
+    --annotation krun.cpus="${NUM_CPUS}"
+    --annotation krun.ram_mib="${MEMORY_MB}"
+  )
+fi
+
+if [[ $# -eq 0 ]]; then
+  podman_run_args+=(
+    --entrypoint bash
+  )
+else
+  podman_run_args+=(
+    --entrypoint bun
+  )
+fi
+
+exec podman run "${podman_run_args[@]}" "${BUN_DOCKER_IMAGE}" "$@"

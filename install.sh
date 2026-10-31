@@ -3,33 +3,23 @@ set -euo pipefail
 
 SCRIPT_DIR="$(dirname -- "$(realpath -- "${BASH_SOURCE[0]}")")"
 
-backup() {
-  local file_path backup_file_path
-  file_path="$1"
-  backup_file_path="${file_path}_$(date +%Y%m%d_%H%M%S)"
-  cp "${file_path}" "${backup_file_path}"
-}
-
-configs_dir="${SCRIPT_DIR}/configs"
-if ! [[ -d "${configs_dir}" ]]; then
-  echo "ERROR: configs dir not found!" >&2
-  exit 1
-fi
-
 shopt -s dotglob
 
-for config in "${configs_dir}"/*; do
+for config in "${SCRIPT_DIR}"/configs/*; do
   if [[ -f "${config}" ]]; then
     config_basename="$(basename -- "${config}")"
     config_home_path="${HOME}/${config_basename}"
-
-    if [[ -f "${config_home_path}" ]] && ! cmp --silent "${config}" "${config_home_path}"; then
-      echo "Backing up ${config_home_path}"
-      backup "${config_home_path}"
-    fi
-
     install -m 644 -o "${USER}" -g "${USER}" "${config}" "${config_home_path}"
   fi
 done
 
 shopt -u dotglob
+
+for script in "${SCRIPT_DIR}"/bin/*; do
+  if [[ -f "${script}" ]]; then
+    script_basename="$(basename -- "${script}")"
+    script_home_path="${HOME}/bin/${script_basename}"
+    mkdir -p -- "${HOME}/bin"
+    install -m 755 -o "${USER}" -g "${USER}" "${script}" "${script_home_path}"
+  fi
+done
