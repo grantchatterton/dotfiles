@@ -11,4 +11,4 @@ fi
 # Keep ~/bin a real directory so other tools can safely install files there.
 # Additional arguments are passed to Stow (e.g. --simulate or --delete).
 exec stow --dir="${SCRIPT_DIR}/stow" --target="${HOME}" \
-  --no-folding --verbose "$@" -- bash git scripts
+  --no-folding --verbose "$@" -- bash bun git scripts
