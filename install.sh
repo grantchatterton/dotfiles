@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")"
+SCRIPT_DIR="$(dirname -- "$(realpath -- "${BASH_SOURCE[0]}")")"
 
 backup() {
   local file_path backup_file_path
   file_path="$1"
-  backup_file_path="${file_path}_"$(date +%Y%m%d_%H%M%S)""
+  backup_file_path="${file_path}_$(date +%Y%m%d_%H%M%S)"
   cp "${file_path}" "${backup_file_path}"
 }
 
