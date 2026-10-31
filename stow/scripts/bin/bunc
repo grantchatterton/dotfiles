@@ -2,7 +2,7 @@
 set -euo pipefail
 
 BUN_VERSION="$(bun --version 2>/dev/null || true)"
-BUN_VERSION="${BUN_VERSION:-latest}"
+BUN_VERSION="${BUN_VERSION:-1}"
 BUN_DOCKER_IMAGE="docker.io/oven/bun:${BUN_VERSION}-slim"
 
 NUM_CPUS=4
