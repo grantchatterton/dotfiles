@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Global variables
 SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")"
 
-# Creates a backup of a file in the same dir with date
 backup() {
   local file_path backup_file_path
   file_path="$1"
@@ -12,7 +10,6 @@ backup() {
   cp "${file_path}" "${backup_file_path}"
 }
 
-# Install everything from ./configs to ~/
 configs_dir="${SCRIPT_DIR}/configs"
 if ! [[ -d "${configs_dir}" ]]; then
   echo "ERROR: configs dir not found!" >&2
