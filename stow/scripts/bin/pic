@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+die() {
+  printf 'Error: %s\n' "$*" >&2
+  exit 1
+}
+
+# Resolve symlinks before mounting so launcher and runtime paths stay valid.
+resolve_command() {
+  local path
+  path="$(command -v "$1")" || die "$1 is not on PATH."
+  realpath -e -- "$path"
+}
+
+bwrap_path="$(resolve_command bwrap)"
+pi_path="$(resolve_command pi)"
+node_path="$(resolve_command node)"
+bun_path="$(resolve_command bun)"
+home_dir="$(realpath -e -- "$HOME")"
+pi_bin="$(dirname -- "$pi_path")"
+pi_dir="$(dirname -- "$pi_bin")"
+node_root="$(dirname -- "$(dirname -- "$node_path")")"
+
+# Pi's managed launcher stores its installation and state beside bin/.
+[[ -d "$pi_dir/install" ]] || die "Expected a managed Pi installation beside $pi_path."
+
+# Only the working tree and Pi's state persist writes to the host. Refuse broad
+# working directories, where this would also expose unrelated files or secrets.
+project_dir="$(pwd -P)"
+if [[ "$project_dir" == / || "$project_dir" == "$home_dir" || "$home_dir" == "$project_dir/"* ]]; then
+  die "Run pic from a project directory below your home or another workspace."
+fi
+
+bwrap_args=(
+  --unshare-all
+  # Model APIs need networking. This also permits access to host-local services.
+  --share-net
+  --die-with-parent
+  --cap-drop ALL
+  # Avoid leaking credentials, agent sockets, or runtime injection variables.
+  --clearenv
+  --setenv HOME "$home_dir"
+  --setenv USER "$(id -un)"
+  --setenv PATH "$pi_bin:$node_root/bin:/opt/pic/bin:/usr/bin:/bin"
+  --setenv TERM "${TERM:-xterm-256color}"
+  --setenv LANG C.UTF-8
+  --setenv SHELL /bin/bash
+  --setenv TMPDIR /tmp
+  --dev /dev
+  --proc /proc
+  --tmpfs /tmp
+  --ro-bind /usr /usr
+  --ro-bind /etc/group /etc/group
+  --ro-bind /etc/passwd /etc/passwd
+  --ro-bind /etc/resolv.conf /etc/resolv.conf
+  --dir "$home_dir"
+  --bind "$project_dir" "$project_dir"
+  --bind "$pi_dir" "$pi_dir"
+  # Pi state is writable, but its launcher and installed code are immutable.
+  --ro-bind "$pi_bin" "$pi_bin"
+  --ro-bind "$pi_dir/install" "$pi_dir/install"
+  --dir /opt/pic/bin
+  --ro-bind "$bun_path" /opt/pic/bin/bun
+  --symlink bun /opt/pic/bin/bunx
+  --chdir "$project_dir"
+)
+
+# Preserve merged-/usr symlinks, while also supporting separate system dirs.
+for path in /bin /sbin /lib /lib64; do
+  if [[ -L "$path" ]]; then
+    bwrap_args+=(--symlink "$(readlink "$path")" "$path")
+  elif [[ -d "$path" ]]; then
+    bwrap_args+=(--ro-bind "$path" "$path")
+  fi
+done
+if [[ "$node_root" != /usr ]]; then
+  bwrap_args+=(--ro-bind "$node_root" "$node_root")
+fi
+# TLS certificates and NSS configuration are needed by Node, Bun, and DNS.
+for path in /etc/ssl/certs /etc/ca-certificates /etc/pki /etc/nsswitch.conf /etc/hosts /etc/gai.conf /etc/ld.so.cache; do
+  bwrap_args+=(--ro-bind-try "$path" "$path")
+done
+
+bwrap_args+=(--ro-bind-try "$HOME/.agents/skills" "$HOME/.agents/skills")
+
+exec "$bwrap_path" "${bwrap_args[@]}" -- "$pi_path" "$@"
