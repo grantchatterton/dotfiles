@@ -19,6 +19,14 @@ die() {
 
 command -v podman >/dev/null || die 'podman not found'
 
+# Refuse to mount / or the home dir (or any ancestor of it, e.g. /home),
+# since that would expose dotfiles, SSH keys, credentials, etc. to the container.
+cwd="$(pwd -P)"
+home="$(cd "$HOME" && pwd -P)"
+if [[ "$cwd" == / || "$home" == "$cwd" || "$home" == "$cwd"/* ]]; then
+  die "refusing to mount $cwd: run from a project directory, not / or your home dir"
+fi
+
 # Resource limits. Used both for Podman's cgroup limits and for sizing
 # the krun VM, so the two stay in sync.
 readonly NUM_CPUS=4
@@ -74,7 +82,7 @@ exec podman run \
   --userns=keep-id \
   --read-only \
   --tmpfs="/tmp:rw,nodev,nosuid,size=512m" \
-  --volume="$(pwd -P):/workspace" \
+  --volume="$cwd:/workspace" \
   --workdir=/workspace \
   "${extra_args[@]+"${extra_args[@]}"}" \
   "$BUN_IMAGE" \
