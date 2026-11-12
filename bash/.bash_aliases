@@ -18,6 +18,3 @@ alias gpl="git pull"
 alias gaa="git add --all"
 alias gcm="git commit -m"
 alias gps="git push origin main"
-
-# ssh
-alias vm="kitten ssh grant@debian-13-7-0-vm"
