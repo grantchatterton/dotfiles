@@ -78,4 +78,4 @@ exec podman run \
   --workdir=/workspace \
   "${extra_args[@]+"${extra_args[@]}"}" \
   "$BUN_IMAGE" \
-  bash "$@"
+  bun "$@"
