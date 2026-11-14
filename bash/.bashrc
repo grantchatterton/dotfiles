@@ -114,20 +114,18 @@ fi
 
 # nvm
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
+
+# shellcheck disable=SC1091
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+
+# shellcheck disable=SC1091
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
-# load bash functions if available
-if [ -f ~/.bash_functions ]; then
-  # shellcheck disable=SC1090
-  . ~/.bash_functions
-fi
-
 # display fancy distro logo if fastfetch available
-if command -v fastfetch >/dev/null; then
+if [ -t 1 ] && command -v fastfetch >/dev/null; then
   fastfetch
 fi
