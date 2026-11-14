@@ -35,7 +35,6 @@ EOF
 # Always builds, so this also picks up Containerfile changes or a newer
 # Claude Code release.
 build_image() {
-  [[ -d "$SBX_DIR" ]] || die "sandbox dir not found: $SBX_DIR"
   [[ -f "$SBX_CONTAINERFILE" ]] || die "containerfile not found: $SBX_CONTAINERFILE"
   podman build -t "$SBX_IMAGE_TAG" -f "$SBX_CONTAINERFILE" -- "$SBX_DIR"
 }
