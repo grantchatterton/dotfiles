@@ -128,6 +128,6 @@ if [ -f ~/.bash_functions ]; then
 fi
 
 # display fancy distro logo if fastfetch available
-if command -v fastfetch >/dev/null 2>&1; then
+if command -v fastfetch >/dev/null; then
   fastfetch
 fi
