@@ -143,14 +143,14 @@ main() {
   # Share host skills read-only so the agent can use but not modify them.
   if [[ -d "$CLAUDE_SKILLS_DIR" ]]; then
     podman_run_args+=(
-      --volume "$CLAUDE_SKILLS_DIR:$SBX_AGENT_HOME/skills:ro"
+      --volume "$CLAUDE_SKILLS_DIR:$SBX_AGENT_HOME/skills:ro,noexec,nodev,nosuid"
     )
   fi
 
   # Share the host bun config read-only, if present.
   if [[ -f "$BUN_CONFIG" ]]; then
     podman_run_args+=(
-      --volume "$BUN_CONFIG:/home/node/.bunfig.toml:ro"
+      --volume "$BUN_CONFIG:/home/node/.bunfig.toml:ro,noexec,nodev,nosuid"
     )
   fi
 
