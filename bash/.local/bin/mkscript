@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Create new executable bash scripts pre-populated with a standard header.
+#
+# Usage:
+#   mkscript <file>...   Create each file with the header and chmod +x it.
+#                        Existing files are never overwritten.
+
+die() {
+  printf 'mkscript: %s\n' "$*" >&2
+  exit 1
+}
+
+if [[ "$#" -eq 0 ]]; then
+  die "usage: mkscript <file>..."
+fi
+
+file_path="$(readlink -f -- "$1")"
+[[ ! -f "$file_path" ]] || die "file already exists at $file_path"
+
+cat <<'EOF' >"$file_path"
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")"
+
+die() {
+  printf '%s\n' "$*" >&2
+  exit 1
+}
+
+main() {
+  echo "Hello, world! This script file is located in $SCRIPT_DIR"
+}
+
+main "$@"
+EOF
+
+chmod +x -- "$file_path"
+
+echo "Created bash script at $file_path"
