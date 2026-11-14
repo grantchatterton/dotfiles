@@ -8,6 +8,8 @@ SBX_AGENT_HOME="/home/node/.claude"
 SBX_CPUS=4
 SBX_MEMORY_MB=8192
 
+CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
+
 die() {
   printf '%s\n' "$*" >&2
   exit 1
@@ -42,6 +44,20 @@ if [[ -t 0 && -t 1 ]]; then
   podman_run_args+=(--tty)
 fi
 
+if command -v krun >/dev/null; then
+  podman_run_args+=(
+    --runtime krun
+    --annotation "krun.cpus=$SBX_CPUS"
+    --annotation "krun.ram_mib=$SBX_MEMORY_MB"
+  )
+fi
+
+if [[ -d "$CLAUDE_SKILLS_DIR" ]]; then
+  podman_run_args+=(
+    --volume "$CLAUDE_SKILLS_DIR:$SBX_AGENT_HOME/skills:ro"
+  )
+fi
+
 for field in NAME EMAIL; do
   value="$(git config --global "user.${field,,}" 2>/dev/null || true)"
   if [[ -n "$value" ]]; then
@@ -51,13 +67,5 @@ for field in NAME EMAIL; do
     )
   fi
 done
-
-if command -v krun >/dev/null; then
-  podman_run_args+=(
-    --runtime krun
-    --annotation "krun.cpus=$SBX_CPUS"
-    --annotation "krun.ram_mib=$SBX_MEMORY_MB"
-  )
-fi
 
 exec podman run "${podman_run_args[@]}" "$SBX_IMAGE_TAG" "$@"
