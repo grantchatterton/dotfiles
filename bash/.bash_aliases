@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 
 # general
-alias src='source "$HOME/.bashrc"'
+alias src='. "$HOME/.bashrc"'
 alias ll="ls -la"
 alias c="clear"
 
@@ -17,7 +17,7 @@ alias gf="git fetch"
 alias gpl="git pull"
 alias gaa="git add --all"
 alias gcm="git commit -m"
-alias gps="git push origin main"
+alias gps="git push"
 
 # functions
 mkcd() {

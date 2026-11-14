@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
 # Symlink each top-level package directory in this repo into $HOME using GNU Stow.
 # Extra arguments are passed through to stow (e.g. -D to unstow, -n for a dry run).
 
-# Stow is required to create the symlinks; bail out with install hint if missing.
-if ! command -v stow >/dev/null; then
-  printf '%s\n' 'Stow not found. Please install using apt install stow.' >&2
+command -v stow >/dev/null || {
+  printf '%s\n' 'setup: stow not found; install it with: sudo apt install stow' >&2
   exit 1
-fi
+}
+
+# Stow packages relative to the cwd, so run from the repo regardless of caller.
+cd -- "$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")"
 
 # --no-folding: create per-file symlinks instead of symlinking whole directories,
 #   so files added later under $HOME are not written into this repo.
-# --target: stow into the home directory.
 # The unquoted */ glob is intentional: it expands to every package directory.
 exec stow --no-folding --target="$HOME" "$@" -- */

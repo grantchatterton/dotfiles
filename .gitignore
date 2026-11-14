@@ -1,6 +1,3 @@
-# Stow / setup artifacts
-.dotfiles_installed
-
 # OS and editor junk
 .DS_Store
 Thumbs.db

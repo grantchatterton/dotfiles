@@ -3,18 +3,13 @@ set -euo pipefail
 
 # Run Claude Code inside a locked-down Podman container, with only the
 # current directory (and the Claude config volume) visible to the agent.
-#
-# Usage:
-#   claudec build              Build (or rebuild) the sandbox image.
-#   claudec run [--cpus <n>] [--memory <mb>] [-- <args>]
-#                              Run the sandbox, building the image if missing.
-#                              Arguments after `--` are passed to `claude`.
+# See usage() below or `claudec --help`.
 
 SBX_DIR="$HOME/.sandboxes/claude"
 SBX_CONTAINERFILE="$SBX_DIR/Containerfile"
 SBX_IMAGE_TAG="localhost/sbx-claude"
 SBX_AGENT_HOME="/home/node/.claude" # must match CLAUDE_CONFIG_DIR in the Containerfile
-# Defaults for `run --cpus` / `run --memory`.
+# Defaults for `run --cpus` / `run --memory`; also shown in usage().
 SBX_DEFAULT_CPUS=4
 SBX_DEFAULT_MEMORY_MB=8192
 
@@ -28,14 +23,14 @@ die() {
 }
 
 usage() {
-  cat <<'EOF'
+  cat <<EOF
 Usage:
   claudec build              Build (or rebuild) the sandbox image.
   claudec run [--cpus <n>] [--memory <mb>] [-- <args>]
                              Run the sandbox, building the image if missing.
-                             --cpus    CPU limit (default: 4).
-                             --memory  Memory limit in MB (default: 8192).
-                             Arguments after `--` are passed to `claude`.
+                             --cpus    CPU limit (default: $SBX_DEFAULT_CPUS).
+                             --memory  Memory limit in MB (default: $SBX_DEFAULT_MEMORY_MB).
+                             Arguments after \`--\` are passed to \`claude\`.
 EOF
 }
 
@@ -148,10 +143,10 @@ cmd_run() {
     )
   fi
 
-  # Mount bun config file (read-only) if present
+  # Share the host bun config read-only, if present.
   if [[ -f "$BUN_CONFIG" ]]; then
     podman_run_args+=(
-      --volume "$BUN_CONFIG:/home/node/$(basename -- "$BUN_CONFIG"):ro"
+      --volume "$BUN_CONFIG:/home/node/.bunfig.toml:ro"
     )
   fi
 
@@ -172,10 +167,6 @@ main() {
   build) cmd_build "$@" ;;
   run) cmd_run "$@" ;;
   -h | --help | help) usage ;;
-  "")
-    usage >&2
-    exit 1
-    ;;
   *) die "unknown command: $cmd (see claudec --help)" ;;
   esac
 }
