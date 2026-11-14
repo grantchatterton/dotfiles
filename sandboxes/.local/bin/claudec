@@ -13,8 +13,6 @@ SBX_DEFAULT_MEMORY_MB=8192
 
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
 
-BUN_CONFIG="$HOME/.bunfig.toml"
-
 die() {
   printf 'claudec: %s\n' "$*" >&2
   exit 1
@@ -144,13 +142,6 @@ main() {
   if [[ -d "$CLAUDE_SKILLS_DIR" ]]; then
     podman_run_args+=(
       --volume "$CLAUDE_SKILLS_DIR:$SBX_AGENT_HOME/skills:ro,noexec,nodev,nosuid"
-    )
-  fi
-
-  # Share the host bun config read-only, if present.
-  if [[ -f "$BUN_CONFIG" ]]; then
-    podman_run_args+=(
-      --volume "$BUN_CONFIG:/home/node/.bunfig.toml:ro,noexec,nodev,nosuid"
     )
   fi
 
