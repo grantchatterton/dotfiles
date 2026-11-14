@@ -12,14 +12,14 @@ die() {
   exit 1
 }
 
-if [[ "$#" -eq 0 ]]; then
-  die "usage: mkscript <file>..."
-fi
+create_script() {
+  local file_path="$1"
 
-file_path="$(readlink -f -- "$1")"
-[[ ! -f "$file_path" ]] || die "file already exists at $file_path"
+  # -e (not -f) so directories and other non-regular files are also refused.
+  [[ ! -e "$file_path" ]] || die "file already exists at $file_path"
+  [[ -d "$(dirname -- "$file_path")" ]] || die "parent directory does not exist for $file_path"
 
-cat <<'EOF' >"$file_path"
+  cat <<'EOF' >"$file_path"
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -31,12 +31,23 @@ die() {
 }
 
 main() {
-  echo "Hello, world! This script file is located in $SCRIPT_DIR"
+  echo "Hello, world! This script is located in $SCRIPT_DIR"
 }
 
 main "$@"
 EOF
 
-chmod +x -- "$file_path"
+  chmod +x -- "$file_path"
+  echo "Created bash script at $(readlink -f -- "$file_path")"
+}
 
-echo "Created bash script at $file_path"
+main() {
+  [[ "$#" -gt 0 ]] || die "usage: mkscript <file>..."
+
+  local file
+  for file in "$@"; do
+    create_script "$file"
+  done
+}
+
+main "$@"
