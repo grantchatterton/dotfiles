@@ -55,6 +55,7 @@ declare -a podman_run_args=(
   # Named volume persists Claude's config, credentials and history across runs.
   --volume "claude-agent-home:$SBX_AGENT_HOME"
   --env "TERM=${TERM:-xterm-256color}"
+  --env "COLORTERM=${COLORTERM:-truecolor}"
 )
 
 # Only allocate a TTY when attached to a terminal, so piping (e.g. `claudec -p`)
