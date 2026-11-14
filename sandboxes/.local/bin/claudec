@@ -148,18 +148,15 @@ cmd_run() {
   exec podman run "${podman_run_args[@]}" "$SBX_IMAGE_TAG" "$@"
 }
 
-# Usage: cmd_build
-cmd_build() {
-  [[ $# -eq 0 ]] || die "build takes no arguments"
-  build_image
-}
-
 main() {
   local cmd="${1:-run}"
   shift || true
 
   case "$cmd" in
-  build) cmd_build "$@" ;;
+  build)
+    [[ "$#" -eq 0 ]] || die "build takes no arguments"
+    build_image
+    ;;
   run) cmd_run "$@" ;;
   -h | --help | help) usage ;;
   "")
