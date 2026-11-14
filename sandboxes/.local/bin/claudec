@@ -44,21 +44,21 @@ cmd_run() {
   local memory_mb="$SBX_DEFAULT_MEMORY_MB"
 
   # Options come first; everything after `--` belongs to the agent.
-  while [[ $# -gt 0 ]]; do
+  while [[ "$#" -gt 0 ]]; do
     case "$1" in
     --)
       shift
       break
       ;;
     --cpus)
-      [[ $# -ge 2 ]] || die "$1 requires a value"
+      [[ "$#" -ge 2 ]] || die "$1 requires a value"
       # Validate here so a typo fails fast instead of inside podman/krun.
       [[ "$2" =~ ^[1-9][0-9]*$ ]] || die "$1 must be a positive integer, got: $2"
       cpus="$2"
       shift 2
       ;;
     --memory)
-      [[ $# -ge 2 ]] || die "$1 requires a value"
+      [[ "$#" -ge 2 ]] || die "$1 requires a value"
       [[ "$2" =~ ^[1-9][0-9]*$ ]] || die "$1 must be a positive integer, got: $2"
       memory_mb="$2"
       shift 2
