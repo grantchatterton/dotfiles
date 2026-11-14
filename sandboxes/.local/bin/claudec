@@ -138,10 +138,10 @@ cmd_run() {
     )
   fi
 
-  # Mount bun config file (read-only) if present
+  # Share the host bun config read-only, if present.
   if [[ -f "$BUN_CONFIG" ]]; then
     podman_run_args+=(
-      --volume "$BUN_CONFIG:/home/node/$(basename -- "$BUN_CONFIG"):ro"
+      --volume "$BUN_CONFIG:/home/node/.bunfig.toml:ro"
     )
   fi
 
