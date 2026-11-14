@@ -1,8 +1,13 @@
+FROM docker.io/oven/bun:1.4.4-slim AS bun
+
 FROM docker.io/library/node:26.13.0-trixie-slim
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends bash ca-certificates git jq ripgrep \
   && rm -rf /var/lib/apt/lists/*
+
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -s bun /usr/local/bin/bunx
 
 # The root fs is mounted read-only at runtime (see claudec), so point npm's
 # cache at the /tmp tmpfs.
