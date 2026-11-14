@@ -1,24 +1,27 @@
-FROM docker.io/oven/bun:1.4.4-slim AS bun
-
 FROM docker.io/library/node:26.13.0-trixie-slim
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends bash ca-certificates git jq ripgrep \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
-RUN ln -s bun /usr/local/bin/bunx
+# The root fs is mounted read-only at runtime (see claudec), so point npm's
+# cache at the /tmp tmpfs.
+ENV NPM_CONFIG_CACHE=/tmp/.npm-cache
 
-ARG USER=node
-RUN mkdir -p /home/${USER}/.claude \
-  && chown -R ${USER}:${USER} /home/${USER}/.claude \
-  && chmod 700 /home/${USER}/.claude
+# Pin with `--build-arg CLAUDE_CODE_VERSION=x.y.z`; changing it also busts the
+# layer cache so a rebuild actually fetches the new release.
+ARG CLAUDE_CODE_VERSION=latest
+RUN npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
+  && npm cache clean --force
 
-RUN npm install -g @anthropic-ai/claude-code
+# Mount point for the persistent config volume; must match SBX_AGENT_HOME in
+# claudec. Pre-creating it lets the volume inherit node's ownership and mode.
+ENV CLAUDE_CONFIG_DIR=/home/node/.claude
+RUN install -d -m 700 -o node -g node "$CLAUDE_CONFIG_DIR"
 
+# The image is rebuilt to update, so stop Claude Code updating itself.
 ENV DISABLE_UPDATES=1
-ENV CLAUDE_CONFIG_DIR="/home/node/.claude"
 
-USER ${USER}
+USER node
 
 ENTRYPOINT ["claude"]

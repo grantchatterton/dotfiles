@@ -1,49 +1,70 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Run Claude Code inside a locked-down Podman container, with only the
+# current directory (and the Claude config volume) visible to the agent.
+# All arguments are passed straight through to `claude`.
+
 SBX_DIR="$HOME/.sandboxes/claude"
 SBX_CONTAINERFILE="$SBX_DIR/Containerfile"
 SBX_IMAGE_TAG="localhost/sbx-claude"
-SBX_AGENT_HOME="/home/node/.claude"
+SBX_AGENT_HOME="/home/node/.claude" # must match CLAUDE_CONFIG_DIR in the Containerfile
 SBX_CPUS=4
 SBX_MEMORY_MB=8192
 
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
 
 die() {
-  printf '%s\n' "$*" >&2
+  printf 'claudec: %s\n' "$*" >&2
   exit 1
 }
 
-[[ -d "$SBX_DIR" ]] || die "Claude sandbox dir not found: $SBX_DIR"
-[[ -f "$SBX_CONTAINERFILE" ]] || die "Claude sandbox containerfile not found: $SBX_CONTAINERFILE"
+[[ -d "$SBX_DIR" ]] || die "sandbox dir not found: $SBX_DIR"
+[[ -f "$SBX_CONTAINERFILE" ]] || die "containerfile not found: $SBX_CONTAINERFILE"
 
+# Build the image on first use only. To pick up Containerfile changes (or a
+# newer Claude Code release), remove it: `podman image rm localhost/sbx-claude`.
 if ! podman image exists "$SBX_IMAGE_TAG"; then
   podman build -t "$SBX_IMAGE_TAG" -f "$SBX_CONTAINERFILE" -- "$SBX_DIR"
 fi
 
+# The working directory is bind-mounted read-write at the same path, so refuse
+# locations that would hand the agent far more than a single project.
 cwd="$(pwd -P)"
+if [[ "$cwd" == "/" || "$cwd" == "$(cd "$HOME" && pwd -P)" ]]; then
+  die "refusing to mount $cwd into the sandbox; cd into a project first"
+fi
 
 declare -a podman_run_args=(
   --rm
   --interactive
+  # Hardening: no privilege escalation, no capabilities, immutable root fs.
   --security-opt no-new-privileges
+  --cap-drop all
+  --read-only
+  --tmpfs "/tmp:rw,nodev,nosuid,mode=1777"
+  # Resource limits.
   --cpus "$SBX_CPUS"
   --memory "${SBX_MEMORY_MB}m"
   --pids-limit 1024
+  # Map the host user to the same UID inside so files written to the
+  # project keep the right ownership.
   --userns keep-id
-  --read-only
-  --tmpfs "/tmp:rw,nodev,nosuid,mode=1777"
   --volume "$cwd:$cwd"
   --workdir "$cwd"
+  # Named volume persists Claude's config, credentials and history across runs.
   --volume "claude-agent-home:$SBX_AGENT_HOME"
   --env "TERM=${TERM:-xterm-256color}"
 )
 
+# Only allocate a TTY when attached to a terminal, so piping (e.g. `claudec -p`)
+# still works.
 if [[ -t 0 && -t 1 ]]; then
   podman_run_args+=(--tty)
 fi
 
+# Prefer a libkrun micro-VM when available for stronger isolation. krun sizes
+# the VM from annotations rather than the cgroup limits above.
 if command -v krun >/dev/null; then
   podman_run_args+=(
     --runtime krun
@@ -52,12 +73,8 @@ if command -v krun >/dev/null; then
   )
 fi
 
-if [[ -d "$CLAUDE_SKILLS_DIR" ]]; then
-  podman_run_args+=(
-    --volume "$CLAUDE_SKILLS_DIR:$SBX_AGENT_HOME/skills:ro"
-  )
-fi
-
+# Forward git identity so commits made in the sandbox are attributed correctly
+# (the host ~/.gitconfig is not mounted).
 for field in NAME EMAIL; do
   value="$(git config --global "user.${field,,}" 2>/dev/null || true)"
   if [[ -n "$value" ]]; then
@@ -67,5 +84,12 @@ for field in NAME EMAIL; do
     )
   fi
 done
+
+# Share host skills read-only so the agent can use but not modify them.
+if [[ -d "$CLAUDE_SKILLS_DIR" ]]; then
+  podman_run_args+=(
+    --volume "$CLAUDE_SKILLS_DIR:$SBX_AGENT_HOME/skills:ro"
+  )
+fi
 
 exec podman run "${podman_run_args[@]}" "$SBX_IMAGE_TAG" "$@"
