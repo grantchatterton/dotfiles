@@ -18,3 +18,8 @@ alias gpl="git pull"
 alias gaa="git add --all"
 alias gcm="git commit -m"
 alias gps="git push origin main"
+
+# functions
+mkcd() {
+  mkdir -p -- "$1" && cd -- "$1" || return 1
+}
