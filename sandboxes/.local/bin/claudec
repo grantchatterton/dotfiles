@@ -23,25 +23,21 @@ die() {
 usage() {
   cat <<'EOF'
 Usage:
-  claudec build              Build (or rebuild) the sandbox image.
-  claudec run [--cpus <n>] [--memory <mb>] [-- <args>]
+  claudec [--cpus <n>] [--memory <mb>] [--no-krun] [--build] [-- <args>]
                              Run the sandbox, building the image if missing.
                              --cpus    CPU limit (default: 4).
                              --memory  Memory limit in MB (default: 8192).
+                             --no-krun Don't use the libkrun micro-VM runtime.
+                             --build   Rebuild the image before running.
                              Arguments after `--` are passed to `claude`.
 EOF
 }
 
-# Always builds, so this also picks up Containerfile changes or a newer
-# Claude Code release.
-build_image() {
-  [[ -f "$SBX_CONTAINERFILE" ]] || die "containerfile not found: $SBX_CONTAINERFILE"
-  podman build -t "$SBX_IMAGE_TAG" -f "$SBX_CONTAINERFILE" -- "$SBX_DIR"
-}
-
-cmd_run() {
+main() {
   local cpus="$SBX_DEFAULT_CPUS"
   local memory_mb="$SBX_DEFAULT_MEMORY_MB"
+  local use_krun=1
+  local build=0
 
   # Options come first; everything after `--` belongs to the agent.
   while [[ "$#" -gt 0 ]]; do
@@ -63,12 +59,25 @@ cmd_run() {
       memory_mb="$2"
       shift 2
       ;;
+    --no-krun)
+      use_krun=0
+      shift
+      ;;
+    --build)
+      build=1
+      shift
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
     *) die "unexpected argument: $1 (pass agent args after --)" ;;
     esac
   done
 
-  if ! podman image exists "$SBX_IMAGE_TAG"; then
-    build_image
+  if [[ "$build" -eq 1 ]] || ! podman image exists "$SBX_IMAGE_TAG"; then
+    [[ -f "$SBX_CONTAINERFILE" ]] || die "containerfile not found: $SBX_CONTAINERFILE"
+    podman build -t "$SBX_IMAGE_TAG" -f "$SBX_CONTAINERFILE" -- "$SBX_DIR"
   fi
 
   # The working directory is bind-mounted read-write at the same path, so
@@ -103,14 +112,14 @@ cmd_run() {
   )
 
   # Only allocate a TTY when attached to a terminal, so piping
-  # (e.g. `claudec run -- -p`) still works.
+  # (e.g. `claudec -- -p`) still works.
   if [[ -t 0 && -t 1 ]]; then
     podman_run_args+=(--tty)
   fi
 
   # Prefer a libkrun micro-VM when available for stronger isolation. krun
   # sizes the VM from annotations rather than the cgroup limits above.
-  if command -v krun >/dev/null; then
+  if [[ "$use_krun" -eq 1 ]] && command -v krun >/dev/null; then
     podman_run_args+=(
       --runtime krun
       --annotation "krun.cpus=$cpus"
@@ -146,21 +155,6 @@ cmd_run() {
   fi
 
   exec podman run "${podman_run_args[@]}" "$SBX_IMAGE_TAG" "$@"
-}
-
-main() {
-  local cmd="${1:-run}"
-  shift || true
-
-  case "$cmd" in
-  build)
-    [[ "$#" -eq 0 ]] || die "build takes no arguments"
-    build_image
-    ;;
-  run) cmd_run "$@" ;;
-  -h | --help | help) usage ;;
-  *) die "unknown command: $cmd (see claudec --help)" ;;
-  esac
 }
 
 main "$@"
