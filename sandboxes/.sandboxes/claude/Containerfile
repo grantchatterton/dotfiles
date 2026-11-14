@@ -1,0 +1,24 @@
+FROM docker.io/oven/bun:1.4.4-slim AS bun
+
+FROM docker.io/library/node:26.13.0-trixie-slim
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends bash ca-certificates git jq ripgrep \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -s bun /usr/local/bin/bunx
+
+ARG USER=node
+RUN mkdir -p /home/${USER}/.claude \
+  && chown -R ${USER}:${USER} /home/${USER}/.claude \
+  && chmod 700 /home/${USER}/.claude
+
+RUN npm install -g @anthropic-ai/claude-code
+
+ENV DISABLE_UPDATES=1
+ENV CLAUDE_CONFIG_DIR="/home/node/.claude"
+
+USER ${USER}
+
+ENTRYPOINT ["claude"]

@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SBX_DIR="$HOME/.sandboxes/claude"
+SBX_CONTAINERFILE="$SBX_DIR/Containerfile"
+SBX_IMAGE_TAG="localhost/sbx-claude"
+SBX_AGENT_HOME="/home/node/.claude"
+SBX_CPUS=4
+SBX_MEMORY_MB=8192
+
+die() {
+  printf '%s\n' "$*" >&2
+  exit 1
+}
+
+[[ -d "$SBX_DIR" ]] || die "Claude sandbox dir not found: $SBX_DIR"
+[[ -f "$SBX_CONTAINERFILE" ]] || die "Claude sandbox containerfile not found: $SBX_CONTAINERFILE"
+
+if ! podman image exists "$SBX_IMAGE_TAG"; then
+  podman build -t "$SBX_IMAGE_TAG" -f "$SBX_CONTAINERFILE" -- "$SBX_DIR"
+fi
+
+cwd="$(pwd -P)"
+
+declare -a podman_run_args=(
+  --rm
+  --interactive
+  --security-opt no-new-privileges
+  --cpus "$SBX_CPUS"
+  --memory "${SBX_MEMORY_MB}m"
+  --pids-limit 1024
+  --userns keep-id
+  --read-only
+  --tmpfs "/tmp:rw,nodev,nosuid,mode=1777"
+  --volume "$cwd:$cwd"
+  --workdir "$cwd"
+  --volume "claude-agent-home:$SBX_AGENT_HOME"
+  --env "TERM=${TERM:-xterm-256color}"
+)
+
+if [[ -t 0 && -t 1 ]]; then
+  podman_run_args+=(--tty)
+fi
+
+for field in NAME EMAIL; do
+  value="$(git config --global "user.${field,,}" 2>/dev/null || true)"
+  if [[ -n "$value" ]]; then
+    podman_run_args+=(
+      --env "GIT_AUTHOR_$field=$value"
+      --env "GIT_COMMITTER_$field=$value"
+    )
+  fi
+done
+
+if command -v krun >/dev/null; then
+  podman_run_args+=(
+    --runtime krun
+    --annotation "krun.cpus=$SBX_CPUS"
+    --annotation "krun.ram_mib=$SBX_MEMORY_MB"
+  )
+fi
+
+exec podman run "${podman_run_args[@]}" "$SBX_IMAGE_TAG" "$@"
