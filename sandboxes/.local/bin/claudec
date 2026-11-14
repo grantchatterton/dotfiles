@@ -159,10 +159,6 @@ main() {
     ;;
   run) cmd_run "$@" ;;
   -h | --help | help) usage ;;
-  "")
-    usage >&2
-    exit 1
-    ;;
   *) die "unknown command: $cmd (see claudec --help)" ;;
   esac
 }
