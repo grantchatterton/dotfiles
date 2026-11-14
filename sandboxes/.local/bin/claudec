@@ -3,18 +3,11 @@ set -euo pipefail
 
 # Run Claude Code inside a locked-down Podman container, with only the
 # current directory (and the Claude config volume) visible to the agent.
-#
-# Usage:
-#   claudec build              Build (or rebuild) the sandbox image.
-#   claudec run [--cpus <n>] [--memory <mb>] [-- <args>]
-#                              Run the sandbox, building the image if missing.
-#                              Arguments after `--` are passed to `claude`.
 
 SBX_DIR="$HOME/.sandboxes/claude"
 SBX_CONTAINERFILE="$SBX_DIR/Containerfile"
 SBX_IMAGE_TAG="localhost/sbx-claude"
 SBX_AGENT_HOME="/home/node/.claude" # must match CLAUDE_CONFIG_DIR in the Containerfile
-# Defaults for `run --cpus` / `run --memory`.
 SBX_DEFAULT_CPUS=4
 SBX_DEFAULT_MEMORY_MB=8192
 
@@ -47,9 +40,7 @@ build_image() {
   podman build -t "$SBX_IMAGE_TAG" -f "$SBX_CONTAINERFILE" -- "$SBX_DIR"
 }
 
-# Usage: cmd_run [--cpus <n>] [--memory <mb>] [-- <agent args...>]
 cmd_run() {
-  # Per-invocation limits; the SBX_DEFAULT_* constants are never modified.
   local cpus="$SBX_DEFAULT_CPUS"
   local memory_mb="$SBX_DEFAULT_MEMORY_MB"
 
