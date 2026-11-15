@@ -10,15 +10,6 @@ SBX_IMAGE_TAG="localhost/sbx-claude"
 SBX_AGENT_HOME="/home/node/.claude" # must match CLAUDE_CONFIG_DIR in the Containerfile
 SBX_DEFAULT_CPUS=4
 SBX_DEFAULT_MEMORY_MB=8192
-SBX_APPEND_SYSTEM_PROMPT="$(
-  cat <<'EOF'
-You are in a hardened Podman container as node user (no sudo/apt).
-- Root fs is read-only (including $HOME)
-- Writable: cwd (bind-mounted from host; same path), /tmp (ephemeral), ~/.claude (~/.claude/skills is read-only)
-- Installed tools: bash, git, jq, node/npm, ripgrep
-- Network is available; no GitHub credentials
-EOF
-)"
 
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
 
@@ -154,8 +145,19 @@ main() {
     )
   fi
 
+  local appended_system_prompt
+  appended_system_prompt="$(
+    cat <<EOF
+You are in a hardened Podman container as node user (no sudo/apt).
+- Root fs is read-only (including ~/)
+- Writable: $cwd (bind-mounted from host; same path), /tmp (ephemeral), ~/.claude (~/.claude/skills is read-only)
+- Installed tools: bash, git, jq, node/npm, ripgrep
+- Network is available; no GitHub credentials
+EOF
+  )"
+
   exec podman run "${podman_run_args[@]}" "$SBX_IMAGE_TAG" \
-    --append-system-prompt "$SBX_APPEND_SYSTEM_PROMPT" "$@"
+    --append-system-prompt "$appended_system_prompt" "$@"
 }
 
 main "$@"
