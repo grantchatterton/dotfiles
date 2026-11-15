@@ -16,7 +16,7 @@ You are in a hardened Podman container as node user (no sudo/apt).
 - Root fs is read-only (including $HOME)
 - Writable: cwd (bind-mounted from host; same path), /tmp (ephemeral), ~/.claude (~/.claude/skills is read-only)
 - Installed tools: bash, git, jq, node/npm, ripgrep
-- Network is available; no SSH keys or GitHub credentials
+- Network is available; no GitHub credentials
 EOF
 )"
 
