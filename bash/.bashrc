@@ -123,9 +123,7 @@ export NVM_DIR="$HOME/.nvm"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
-if [ -d "$BUN_INSTALL/bin" ]; then
-  export PATH="$BUN_INSTALL/bin:$PATH"
-fi
+export PATH="$BUN_INSTALL/bin:$PATH"
 
 # display fancy distro logo if fastfetch available
 if [ -t 1 ] && command -v fastfetch >/dev/null; then
