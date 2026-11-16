@@ -150,7 +150,7 @@ main() {
     cat <<EOF
 You are in a hardened Podman container as node user (no sudo/apt).
 - Root fs is read-only (including ~/)
-- Writable: $cwd (bind-mounted from host; same path), /tmp (ephemeral), ~/.claude (~/.claude/skills is read-only)
+- Writable: $cwd (bind-mounted from host), /tmp (ephemeral), ~/.claude (~/.claude/skills is read-only)
 - Installed tools: bash, git, jq, node/npm, ripgrep
 - Network is available; no GitHub credentials
 EOF
