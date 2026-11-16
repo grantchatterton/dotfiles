@@ -15,15 +15,16 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends bash ca-certificates git jq ripgrep \
   && rm -rf /var/lib/apt/lists/*
 
-ENV NPM_CONFIG_CACHE=/tmp/.npm-cache
-
-ENV DISABLE_UPDATES=1
-
 ENV CLAUDE_CONFIG_DIR=/home/node/.claude
-RUN install -d -m 700 -o node -g node -- "${CLAUDE_CONFIG_DIR}"
+RUN mkdir -p "${CLAUDE_CONFIG_DIR}" \
+  && chown -R node:node "${CLAUDE_CONFIG_DIR}" \
+  && chmod 700 "${CLAUDE_CONFIG_DIR}"
 
 COPY --from=base --chown=root:root --chmod=0755 \
   /root/.local/bin/claude /usr/local/bin/claude
+
+ENV NPM_CONFIG_CACHE=/tmp/.npm-cache
+ENV DISABLE_UPDATES=1
 
 USER node
 
