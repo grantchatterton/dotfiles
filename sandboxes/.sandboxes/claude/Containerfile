@@ -1,18 +1,30 @@
+FROM docker.io/library/debian:trixie-slim AS base
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends bash ca-certificates curl \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/.local/bin:$PATH"
+
+ARG CLAUDE_CODE_VERSION=latest
+RUN curl -fsSL https://claude.ai/install.sh | bash -s -- "${CLAUDE_CODE_VERSION}"
+
 FROM docker.io/library/node:26.13.0-trixie-slim
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends bash ca-certificates git jq ripgrep \
   && rm -rf /var/lib/apt/lists/*
 
-ENV CLAUDE_CONFIG_DIR=/home/node/.claude
-RUN install -d -m 700 -o node -g node -- "$CLAUDE_CONFIG_DIR"
-
 ENV NPM_CONFIG_CACHE=/tmp/.npm-cache
-ARG CLAUDE_CODE_VERSION=latest
-RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} \
-  && npm cache clean --force
 
 ENV DISABLE_UPDATES=1
 
+ENV CLAUDE_CONFIG_DIR=/home/node/.claude
+RUN install -d -m 700 -o node -g node -- "${CLAUDE_CONFIG_DIR}"
+
+COPY --from=base --chown=root:root --chmod=0755 \
+  /root/.local/bin/claude /usr/local/bin/claude
+
 USER node
+
 ENTRYPOINT ["claude"]
