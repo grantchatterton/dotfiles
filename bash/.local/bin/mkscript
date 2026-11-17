@@ -13,7 +13,8 @@ die() {
 }
 
 create_script() {
-  local file_path="$1"
+  local file_path
+  file_path="$(readlink -f -- "$1")"
 
   # -e (not -f) so directories and other non-regular files are also refused.
   [[ ! -e "$file_path" ]] || die "file already exists at $file_path"
@@ -38,7 +39,7 @@ main "$@"
 EOF
 
   chmod +x -- "$file_path"
-  echo "Created bash script at $(readlink -f -- "$file_path")"
+  echo "$file_path"
 }
 
 main() {
