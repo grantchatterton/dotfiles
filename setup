@@ -2,14 +2,30 @@
 set -euo pipefail
 
 # Symlink each top-level package directory in this repo into $HOME using GNU Stow.
-# Extra arguments are passed through to stow (e.g. -D to unstow, -n for a dry run).
-
-if ! command -v stow >/dev/null; then
-  printf '%s\n' 'Stow not found. Please install using apt install stow.' >&2
-  exit 1
-fi
+# If stow isn't installed but podman is, stow is run inside a throwaway container.
 
 # --no-folding: create per-file symlinks instead of symlinking whole directories,
 #   so files added later under $HOME are not written into this repo.
 # The unquoted */ glob is intentional: it expands to every package directory.
-exec stow --no-folding --target="$HOME" "$@" -- */
+stow_args=(--no-folding --target="$HOME" -- */)
+
+if command -v stow >/dev/null; then
+  exec stow "${stow_args[@]}"
+fi
+
+if command -v podman >/dev/null; then
+  # $HOME and the repo are mounted at their host paths so the relative symlinks
+  # stow computes are valid on the host. Rootless podman maps container root to
+  # the invoking user, so created links are owned by you.
+  # label=disable avoids SELinux denials without relabeling all of $HOME (:z would).
+  exec podman run --rm \
+    --security-opt label=disable \
+    --volume "$HOME:$HOME" \
+    --volume "$PWD:$PWD" \
+    --workdir "$PWD" \
+    docker.io/library/alpine:3.22 \
+    sh -c 'apk add --no-cache --quiet stow && exec stow "$@"' sh "${stow_args[@]}"
+fi
+
+printf '%s\n' 'Neither stow nor podman found. Please install one (e.g. apt install stow).' >&2
+exit 1
