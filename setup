@@ -4,10 +4,16 @@ set -euo pipefail
 # Symlink each top-level package directory in this repo into $HOME using GNU Stow.
 # If stow isn't installed but podman is, stow is run inside a throwaway container.
 
+# Run from the repo root so the package glob works no matter where setup is invoked.
+cd "$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")"
+
+packages=(*/)
+
+# Setup the args to pass to stow.
 # --no-folding: create per-file symlinks instead of symlinking whole directories,
 #   so files added later under $HOME are not written into this repo.
-# The unquoted */ glob is intentional: it expands to every package directory.
-stow_args=(--no-folding --target="$HOME" -- */)
+# Note: no "--" before the packages; stow ignores package names after it.
+stow_args=(--verbose --no-folding --target="$HOME" "${packages[@]}")
 
 if command -v stow >/dev/null; then
   exec stow "${stow_args[@]}"
