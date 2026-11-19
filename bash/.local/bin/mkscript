@@ -13,12 +13,15 @@ die() {
 }
 
 create_script() {
+  # Check the parent before resolving: readlink -f fails (and set -e exits
+  # silently) when the parent directory does not exist.
+  [[ -d "$(dirname -- "$1")" ]] || die "parent directory does not exist for $1"
+
   local file_path
   file_path="$(readlink -f -- "$1")"
 
   # -e (not -f) so directories and other non-regular files are also refused.
   [[ ! -e "$file_path" ]] || die "file already exists at $file_path"
-  [[ -d "$(dirname -- "$file_path")" ]] || die "parent directory does not exist for $file_path"
 
   cat <<'EOF' >"$file_path"
 #!/usr/bin/env bash
