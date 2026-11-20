@@ -43,7 +43,7 @@ esac
 # uncomment for a colored prompt, if the terminal has the capability; turned
 # off by default to not distract the user: the focus in a terminal window
 # should be on the output of commands, not on the prompt
-#force_color_prompt=yes
+force_color_prompt=yes
 
 if [ -n "$force_color_prompt" ]; then
   if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
@@ -56,14 +56,17 @@ if [ -n "$force_color_prompt" ]; then
   fi
 fi
 
-PROMPT_COMMAND='PS1_CMD1=$(__git_ps1 " (%s)")'
-
 if [ "$color_prompt" = yes ]; then
-  PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\] \[\033[01;34m\]\w\[\033[00m\]\[\033[0;33m\]${PS1_CMD1} \[\033[00m\]\$ '
+  COLOR_GREEN=$'\[\033[01;32m\]'
+  COLOR_BLUE=$'\[\033[01;34m\]'
+  COLOR_RESET=$'\[\033[0m\]'
+
+  PS1="${debian_chroot:+($debian_chroot)}${COLOR_GREEN}\u@\h ${COLOR_BLUE}\w ${COLOR_RESET}\\$ "
+
+  unset COLOR_GREEN COLOR_BLUE COLOR_RESET
 else
-  PS1='${debian_chroot:+($debian_chroot)}\u@\h \w${PS1_CMD1} \$ '
+  PS1='${debian_chroot:+($debian_chroot)}\u@\h \w \$ '
 fi
-unset color_prompt force_color_prompt
 
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
@@ -77,12 +80,12 @@ esac
 if [ -x /usr/bin/dircolors ]; then
   test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
   alias ls='ls --color=auto'
-  #alias dir='dir --color=auto'
-  #alias vdir='vdir --color=auto'
+  alias dir='dir --color=auto'
+  alias vdir='vdir --color=auto'
 
-  #alias grep='grep --color=auto'
-  #alias fgrep='fgrep --color=auto'
-  #alias egrep='egrep --color=auto'
+  alias grep='grep --color=auto'
+  alias fgrep='fgrep --color=auto'
+  alias egrep='egrep --color=auto'
 fi
 
 # colored GCC warnings and errors
