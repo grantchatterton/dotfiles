@@ -38,7 +38,4 @@ for pkg in "${packages[@]}"; do
   done < <(find "$pkg" \( -type f -o -type l \) -print0)
 done
 
-if ! stow --no-folding -v -t "$HOME" -- "${packages[@]}"; then
-  [[ -d "$BACKUP_FOLDER" ]] && printf 'Stow failed; originals are in %s\n' "$BACKUP_FOLDER" >&2
-  exit 1
-fi
+exec stow --no-folding -v -t "$HOME" -- "${packages[@]}"
