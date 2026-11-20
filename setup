@@ -1,64 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Symlink each top-level package directory in this repo into $HOME using GNU Stow.
-# If stow isn't installed but podman is, stow is run inside a throwaway container.
-
 SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")"
+BACKUP_FOLDER="$HOME/dotfiles-backup-$(date +%s)"
 
-# Run from the repo root so the package glob works no matter where setup is invoked.
-cd "$SCRIPT_DIR"
-
-packages=(*/)
-
-# Stow refuses to replace existing files (e.g. the default ~/.bashrc a new machine
-# ships with), so move any that would conflict to <name>.bak.<timestamp> first.
-backup_conflicts() {
-  local timestamp pkg_file rel target
-  timestamp="$(date +%Y%m%d%H%M%S)"
-
-  while IFS= read -r -d "" pkg_file; do
-    rel="${pkg_file#*/}" # strip the package dir, e.g. bash/.bashrc -> .bashrc
-    target="$HOME/$rel"
-
-    # -L too, so dangling symlinks are caught (-e follows links).
-    [[ -e "$target" || -L "$target" ]] || continue
-    # Already linked to this repo (e.g. setup was run before): leave it for stow.
-    [[ "$(readlink -f -- "$target")" == "$SCRIPT_DIR/$pkg_file" ]] && continue
-
-    mv -- "$target" "$target.bak.$timestamp"
-    printf "Backed up %s -> %s\n" "$target" "$target.bak.$timestamp"
-  done < <(find "${packages[@]%/}" \( -type f -o -type l \) -print0)
+die() {
+  printf '%s\n' "ERROR: $*" >&2
+  exit 1
 }
 
-# Check before backing up, so a machine with neither isn't left with its files
-# moved aside and nothing linked in their place.
-if ! command -v stow >/dev/null && ! command -v podman >/dev/null; then
-  printf '%s\n' 'Neither stow nor podman found. Please install one (e.g. apt install stow).' >&2
-  exit 1
-fi
+command -v stow >/dev/null || die "Stow not found"
 
-backup_conflicts
+cd -- "$SCRIPT_DIR"
 
-# Setup the args to pass to stow.
-# --no-folding: create per-file symlinks instead of symlinking whole directories,
-#   so files added later under $HOME are not written into this repo.
-# Note: no "--" before the packages; stow ignores package names after it.
-stow_args=(--verbose --no-folding --target="$HOME" "${packages[@]}")
+packages=(*/)
+for pkg in "${packages[@]}"; do
+  [[ -d "$pkg" ]] || continue
 
-if command -v stow >/dev/null; then
-  exec stow "${stow_args[@]}"
-fi
+  while IFS= read -r -d '' pkg_file; do
+    pkg_file_rel="${pkg_file#"$pkg"}"
+    pkg_file_home="$HOME/$pkg_file_rel"
+    [[ -e "$pkg_file_home" ]] || continue
 
-# Otherwise podman (its presence was checked above).
-# $HOME and the repo are mounted at their host paths so the relative symlinks
-# stow computes are valid on the host. Rootless podman maps container root to
-# the invoking user, so created links are owned by you.
-# label=disable avoids SELinux denials without relabeling all of $HOME (:z would).
-exec podman run --rm \
-  --security-opt label=disable \
-  --volume "$HOME:$HOME" \
-  --volume "$PWD:$PWD" \
-  --workdir "$PWD" \
-  docker.io/library/alpine:3.22 \
-  sh -c 'apk add --no-cache --quiet stow && exec stow "$@"' sh "${stow_args[@]}"
+    pkg_file_home_backup="$BACKUP_FOLDER/$pkg_file_rel"
+    mkdir -p -- "$(dirname -- "$pkg_file_home_backup")"
+
+    cp -- "$pkg_file_home" "$pkg_file_home_backup"
+    [[ -L "$pkg_file_home" ]] && ln -sfn -- "$(readlink -f -- "$pkg_file_home")" "$pkg_file_home_backup"
+
+    rm -- "$pkg_file_home"
+  done < <(find "$pkg" -type f -print0)
+done
+
+exec stow --no-folding -v -t ~ -- "${packages[@]}"
