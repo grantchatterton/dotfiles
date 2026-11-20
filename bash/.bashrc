@@ -56,6 +56,8 @@ if [ -n "$force_color_prompt" ]; then
   fi
 fi
 
+unset force_color_prompt
+
 if [ "$color_prompt" = yes ]; then
   COLOR_GREEN=$'\[\033[01;32m\]'
   COLOR_BLUE=$'\[\033[01;34m\]'
@@ -68,7 +70,7 @@ else
   PS1='${debian_chroot:+($debian_chroot)}\u@\h \w \$ '
 fi
 
-unset color_prompt force_color_prompt
+unset color_prompt
 
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
