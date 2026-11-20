@@ -131,13 +131,14 @@ if [ -t 1 ] && command -v fastfetch >/dev/null; then
 fi
 
 # custom prompt
-GIT_PS1_SHOWDIRTYSTATE=1
-if [ -n "$SSH_CONNECTION" ]; then __host_color='1;36'; else __host_color='1;32'; fi
-__set_prompt() {
-  local status=$?
-  local git_branch prompt_color
-  git_branch=$(__git_ps1 " (%s)")
-  if [ "$status" -eq 0 ]; then prompt_color='0'; else prompt_color='31'; fi
-  PS1="\[\e[${__host_color}m\]\u@\h\[\e[0m\] \[\e[1;34m\]\w\[\e[0m\]\[\e[33m\]${git_branch}\[\e[0m\] \[\e[${prompt_color}m\]\\\$\[\e[0m\] "
-}
-PROMPT_COMMAND=__set_prompt
+# shellcheck disable=SC2034
+# GIT_PS1_SHOWDIRTYSTATE=1
+# if [ -n "$SSH_CONNECTION" ]; then __host_color='1;36'; else __host_color='1;32'; fi
+# __set_prompt() {
+#   local status=$?
+#   local git_branch prompt_color
+#   git_branch=$(__git_ps1 " (%s)")
+#   if [ "$status" -eq 0 ]; then prompt_color='0'; else prompt_color='31'; fi
+#   PS1="\[\e[${__host_color}m\]\u@\h\[\e[0m\] \[\e[1;34m\]\w\[\e[0m\]\[\e[33m\]${git_branch}\[\e[0m\] \[\e[${prompt_color}m\]\\\$\[\e[0m\] "
+# }
+# PROMPT_COMMAND=__set_prompt
