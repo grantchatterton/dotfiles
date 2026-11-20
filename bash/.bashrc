@@ -135,3 +135,7 @@ export NVM_DIR="$HOME/.nvm"
 if [ -t 1 ] && command -v fastfetch >/dev/null; then
   fastfetch
 fi
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
