@@ -4,6 +4,11 @@
 alias src='source "$HOME/.bashrc"'
 alias ll="ls -la"
 alias c="clear"
+alias dotfiles='cd "$HOME/dotfiles"'
+
+# nav
+alias ..="cd .."
+alias -- -="cd -"
 
 # apt (Debian/Ubuntu)
 alias aptu="sudo apt update && sudo apt upgrade -y"
