@@ -1,14 +1,14 @@
 # shellcheck shell=bash
 
 # general
-alias src='source "$HOME/.bashrc"'
+alias src='source ~/.bashrc'
 alias c='clear'
 
 # nav
 alias ..='cd ..'
 alias -- -='cd -'
-alias dotfiles='mkdir -p -- "$HOME/dotfiles" && cd -- "$HOME/dotfiles"'
-alias projects='mkdir -p -- "$HOME/Projects" && cd -- "$HOME/Projects"'
+alias dotfiles='mkdir -p ~/dotfiles && cd ~/dotfiles'
+alias projects='mkdir -p ~/Projects && cd ~/Projects'
 
 # apt (Debian/Ubuntu)
 alias aptu='sudo apt update && sudo apt upgrade -y'
