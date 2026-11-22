@@ -27,6 +27,9 @@ alias gps='git push origin main'
 # ls
 alias ll='ls -la'
 
+# files
+alias bat='batcat'
+
 # functions
 mkcd() {
   mkdir -p -- "$1" && cd -- "$1" || return 1
