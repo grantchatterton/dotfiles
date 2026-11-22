@@ -3,11 +3,12 @@
 # general
 alias src='source "$HOME/.bashrc"'
 alias c='clear'
-alias dotfiles='cd "$HOME/dotfiles"'
 
 # nav
 alias ..='cd ..'
 alias -- -='cd -'
+alias dotfiles='mkdir -p -- "$HOME/dotfiles" && cd -- "$HOME/dotfiles"'
+alias projects='mkdir -p -- "$HOME/Projects" && cd -- "$HOME/Projects"'
 
 # apt (Debian/Ubuntu)
 alias aptu='sudo apt update && sudo apt upgrade -y'
