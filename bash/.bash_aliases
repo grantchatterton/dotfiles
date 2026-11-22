@@ -2,7 +2,6 @@
 
 # general
 alias src='source "$HOME/.bashrc"'
-alias ll='ls -la'
 alias c='clear'
 alias dotfiles='cd "$HOME/dotfiles"'
 
@@ -23,6 +22,9 @@ alias gpl='git pull'
 alias gaa='git add --all'
 alias gcm='git commit -m'
 alias gps='git push origin main'
+
+# ls
+alias ll='ls -laF'
 
 # functions
 mkcd() {
