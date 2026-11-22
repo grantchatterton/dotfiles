@@ -24,7 +24,7 @@ alias gcm='git commit -m'
 alias gps='git push origin main'
 
 # ls
-alias ll='ls -laF'
+alias ll='ls -la'
 
 # functions
 mkcd() {
