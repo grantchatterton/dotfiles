@@ -38,4 +38,5 @@ for pkg in "${packages[@]}"; do
   done < <(find "$pkg" \( -type f -o -type l \) -print0)
 done
 
-exec stow --no-folding -t "$HOME" -- "${packages[@]}"
+exec stow --no-folding -v -t ~ "${packages[@]}"
+
