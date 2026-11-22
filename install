@@ -5,11 +5,41 @@ SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")"
 BACKUP_FOLDER="$HOME/dotfiles-backup-$(date +%Y%m%d%H%M%S)"
 
 die() {
-  printf '%s\n' "ERROR: $*" >&2
+  printf 'ERROR: %s\n' "$*" >&2
   exit 1
 }
 
-command -v stow >/dev/null || die "Stow not found"
+STOW_IMAGE="docker.io/library/alpine:3.20"
+
+# Prefer native stow; fall back to running it inside a podman container.
+if command -v stow >/dev/null; then
+  use_podman=false
+elif command -v podman >/dev/null; then
+  use_podman=true
+else
+  die "Neither stow nor podman found"
+fi
+
+run_stow() {
+  if [[ "$use_podman" == false ]]; then
+    exec stow "$@"
+  fi
+
+  # Mount $HOME (and the repo, if outside $HOME) at identical paths so the
+  # relative symlinks stow computes are valid on the host too.
+  local mounts=(-v "$HOME:$HOME")
+  [[ "$SCRIPT_DIR" == "$HOME"/* ]] || mounts+=(-v "$SCRIPT_DIR:$SCRIPT_DIR")
+
+  # Rootless podman maps container root to the invoking user, so the links
+  # end up owned by you. label=disable avoids SELinux denials without
+  # relabeling $HOME (never use :z on $HOME).
+  exec podman run --rm \
+    --security-opt label=disable \
+    "${mounts[@]}" \
+    -w "$SCRIPT_DIR" \
+    "$STOW_IMAGE" \
+    sh -c 'apk add --no-cache --quiet stow && exec stow "$@"' sh "$@"
+}
 
 cd -- "$SCRIPT_DIR"
 
@@ -38,5 +68,5 @@ for pkg in "${packages[@]}"; do
   done < <(find "$pkg" \( -type f -o -type l \) -print0)
 done
 
-exec stow --no-folding -v -t ~ "${packages[@]}"
-
+# Explicit target: inside the container ~ would be /root.
+run_stow --no-folding -v -t "$HOME" "${packages[@]}"
