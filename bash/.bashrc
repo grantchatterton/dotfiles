@@ -125,6 +125,9 @@ export NVM_DIR="$HOME/.nvm"
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
+# rust
+[ -s "$HOME/.cargo/env" ] && \. "$HOME/.cargo/env"
+
 # display fancy distro logo if fastfetch available
 if [ -t 1 ] && command -v fastfetch >/dev/null; then
   fastfetch
