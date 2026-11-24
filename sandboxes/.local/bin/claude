@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+IMAGE="localhost/sbx-claude:latest"
+CPUS=4
+MEMORY_MB=8192
+
+USER_NAME="$(id -un)"
+USER_UID="$(id -u)"
+USER_GID="$(id -g)"
+CONTAINER_CLAUDE_DIR="/home/$USER_NAME/.claude"
+
+CONTAINERFILE="$(cat <<'EOF'
+FROM docker.io/library/debian:trixie-slim AS install
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends bash ca-certificates curl \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/.local/bin:$PATH"
+RUN curl -fsSL https://claude.ai/install.sh | bash
+
+FROM docker.io/library/node:26-trixie-slim
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends bash ca-certificates git jq ripgrep \
+  && rm -rf /var/lib/apt/lists/*
+
+ARG USER_UID
+ARG USER_GID
+ARG USER_NAME
+
+# The stock node user occupies UID/GID 1000, which often clashes with the host user's
+RUN userdel -r node \
+  && groupadd -g "$USER_GID" "$USER_NAME" \
+  && useradd -u "$USER_UID" -g "$USER_GID" -ms /bin/bash "$USER_NAME"
+
+ENV HOME=/home/$USER_NAME
+ENV CLAUDE_CONFIG_DIR=$HOME/.claude
+ENV DISABLE_UPDATES=1
+
+# Pre-create so the named volume mounted here inherits the right ownership
+RUN install -d -o "$USER_NAME" -g "$USER_NAME" "$CLAUDE_CONFIG_DIR"
+
+COPY --from=install /root/.local/bin/claude /usr/local/bin/claude
+
+USER $USER_NAME
+ENTRYPOINT ["claude"]
+EOF
+)"
+
+APPEND_SYSTEM_PROMPT="$(cat <<'EOF'
+You are working inside a hardened Podman container (no sudo/apt).
+- Root fs is read-only
+- cwd, /tmp, ~/.claude are writable (~/.claude/skills is read-only)
+- Installed tools: bash, git, jq, node, ripgrep
+EOF
+)"
+
+# Runs in a subshell so the EXIT trap fires before the final exec
+build_image() (
+  temp_dir="$(mktemp -d)"
+  trap 'rm -rf -- "$temp_dir"' EXIT
+
+  # Empty build context: the Containerfile copies nothing from the host
+  # --no-cache: otherwise rebuilds would reuse stale packages and an old claude
+  podman build \
+    --build-arg USER_UID="$USER_UID" \
+    --build-arg USER_GID="$USER_GID" \
+    --build-arg USER_NAME="$USER_NAME" \
+    --no-cache \
+    -t "$IMAGE" \
+    -f - \
+    -- "$temp_dir" <<< "$CONTAINERFILE"
+)
+
+should_build=false
+if [[ "${1:-}" == "build" ]]; then
+  should_build=true
+  shift
+fi
+
+cwd="$(pwd -P)"
+# Resolve symlinks so the comparison with the physical cwd is reliable
+home="$(readlink -f -- "$HOME")"
+if [[ "$cwd" == "/" || "$home/" == "$cwd"/* ]]; then
+  echo "ERROR: Refusing to mount home dir or one of its ancestors!" >&2
+  exit 1
+fi
+
+if [[ "$should_build" == "true" ]] || ! podman image exists "$IMAGE"; then
+  build_image
+fi
+
+# The image has no terminfo entry for kitty
+term="${TERM:-xterm-256color}"
+if [[ "$term" == "xterm-kitty" ]]; then
+  term="xterm-256color"
+fi
+
+podman_run_args=(
+  --rm
+  --cap-drop ALL
+  --security-opt no-new-privileges
+  --pids-limit 1024
+  --cpus "$CPUS"
+  --memory "${MEMORY_MB}m"
+  --read-only
+  --tmpfs "/tmp:rw,nodev,nosuid,mode=1777"
+  --volume "claude-agent-home:$CONTAINER_CLAUDE_DIR"
+  --volume "$cwd:$cwd"
+  --workdir "$cwd"
+  # Map the host user to the same IDs so files in cwd keep their ownership
+  --userns "keep-id:uid=$USER_UID,gid=$USER_GID"
+  --env "TERM=$term"
+  --env "COLORTERM=${COLORTERM:-truecolor}"
+  # The default ~/.npm is on the read-only root fs
+  --env npm_config_cache=/tmp/.npm-cache
+)
+
+if [[ -t 0 ]]; then
+  podman_run_args+=(--interactive)
+fi
+
+if [[ -t 1 ]]; then
+  podman_run_args+=(--tty)
+fi
+
+# The host's global git config isn't mounted, so pass the identity via env
+for key in name email; do
+  value="$(git config --global "user.$key" 2>/dev/null || true)"
+  if [[ -n "$value" ]]; then
+    podman_run_args+=(
+      --env "GIT_AUTHOR_${key^^}=$value"
+      --env "GIT_COMMITTER_${key^^}=$value"
+    )
+  fi
+done
+
+if [[ -d "$HOME/.claude/skills" ]]; then
+  podman_run_args+=(--volume "$HOME/.claude/skills:$CONTAINER_CLAUDE_DIR/skills:ro")
+fi
+
+# Prefer microVM isolation when available
+if command -v krun >/dev/null; then
+  podman_run_args+=(
+    --runtime krun
+    --annotation "krun.cpus=$CPUS"
+    --annotation "krun.ram_mib=$MEMORY_MB"
+  )
+fi
+
+exec podman run "${podman_run_args[@]}" "$IMAGE" --append-system-prompt "$APPEND_SYSTEM_PROMPT" "$@"
