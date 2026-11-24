@@ -25,7 +25,7 @@ FROM docker.io/library/node:26-trixie-slim
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends bash ca-certificates git jq ripgrep \
+  && apt-get install -y --no-install-recommends bash ca-certificates git jq ripgrep shellcheck shfmt \
   && rm -rf /var/lib/apt/lists/*
 
 ARG USER_UID
@@ -55,7 +55,7 @@ APPEND_SYSTEM_PROMPT="$(cat <<'EOF'
 You are working inside a hardened Podman container (no sudo/apt).
 - Root fs is read-only
 - cwd, /tmp, ~/.claude are writable (~/.claude/skills is read-only)
-- Installed tools: bash, git, jq, node, ripgrep
+- Installed tools: bash, git, jq, node, ripgrep, shellcheck, shfmt
 EOF
 )"
 
