@@ -1,72 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")"
-BACKUP_FOLDER="$HOME/dotfiles-backup-$(date +%Y%m%d%H%M%S)"
-
-die() {
-  printf 'ERROR: %s\n' "$*" >&2
-  exit 1
-}
-
-STOW_IMAGE="docker.io/library/alpine:3.20"
-
-# Prefer native stow; fall back to running it inside a podman container.
-if command -v stow >/dev/null; then
-  use_podman=false
-elif command -v podman >/dev/null; then
-  use_podman=true
-else
-  die "Neither stow nor podman found"
-fi
-
-run_stow() {
-  if [[ "$use_podman" == false ]]; then
-    exec stow "$@"
+for cmd in git stow; do
+  if ! command -v "$cmd" >/dev/null; then
+    printf '===> ERROR: %s\n' "Command '$cmd' is missing!" >&2
+    exit 1
   fi
-
-  # Mount $HOME (and the repo, if outside $HOME) at identical paths so the
-  # relative symlinks stow computes are valid on the host too.
-  local mounts=(-v "$HOME:$HOME")
-  [[ "$SCRIPT_DIR" == "$HOME"/* ]] || mounts+=(-v "$SCRIPT_DIR:$SCRIPT_DIR")
-
-  # Rootless podman maps container root to the invoking user, so the links
-  # end up owned by you. label=disable avoids SELinux denials without
-  # relabeling $HOME (never use :z on $HOME).
-  exec podman run --rm \
-    --security-opt label=disable \
-    "${mounts[@]}" \
-    -w "$SCRIPT_DIR" \
-    "$STOW_IMAGE" \
-    sh -c 'apk add --no-cache --quiet stow && exec stow "$@"' sh "$@"
-}
-
-cd -- "$SCRIPT_DIR"
-
-# Top-level non-hidden dirs are packages (skips .git, setup, etc.).
-packages=(*/)
-packages=("${packages[@]%/}")
-
-# Move anything stow would conflict with into BACKUP_FOLDER.
-for pkg in "${packages[@]}"; do
-  [[ -d "$pkg" ]] || continue
-
-  while IFS= read -r -d '' pkg_file; do
-    pkg_file_rel="${pkg_file#"$pkg"/}"
-    pkg_file_home="$HOME/$pkg_file_rel"
-
-    # -L catches dangling symlinks (-e follows links).
-    [[ -e "$pkg_file_home" || -L "$pkg_file_home" ]] || continue
-    # Already linked to this repo (re-run): leave for stow.
-    [[ "$(readlink -f -- "$pkg_file_home")" == "$SCRIPT_DIR/$pkg_file" ]] && continue
-
-    pkg_file_home_backup="$BACKUP_FOLDER/$pkg_file_rel"
-    mkdir -p -- "$(dirname -- "$pkg_file_home_backup")"
-    # mv keeps symlinks as symlinks and works for dangling ones.
-    mv -- "$pkg_file_home" "$pkg_file_home_backup"
-    printf 'Backed up %s -> %s\n' "$pkg_file_home" "$pkg_file_home_backup"
-  done < <(find "$pkg" \( -type f -o -type l \) -print0)
 done
 
-# Explicit target: inside the container ~ would be /root.
-run_stow --no-folding -v -t "$HOME" "${packages[@]}"
+packages=(bash bun git)
+
+cd -- "$HOME/dotfiles"
+stow -v --no-folding -t "$HOME" --adopt "${packages[@]}"
+git restore .
