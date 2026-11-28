@@ -30,6 +30,9 @@ alias ll='ls -la'
 # files
 alias bat='batcat'
 
+# chmod
+alias chmdo='chmod'
+
 # functions
 mkcd() {
   mkdir -p -- "$1" && cd -- "$1" || return 1
